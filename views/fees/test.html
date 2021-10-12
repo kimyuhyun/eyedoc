@@ -1,0 +1,75 @@
+<!-- <h2>계산결과</h2>
+<table width="100%">
+    <tr>
+        <td>
+            매매가<br>
+            입력값
+        </td>
+        <td align="right">500000000원</td></tr>
+    <tr><td colspan="2" bgcolor="#AAA"></td></tr>
+    <tr><td>수수료 요율</td><td align="right">0.5%</td></tr>
+    <tr><td>수수료</td><td align="right">250000원</td></tr>
+    <tr><td colspan="2" bgcolor="#AAA"></td></tr>
+    <tr><td>중개보수료</td><td align="right">250000원</td></tr>
+    <tr><td>부가세</td><td align="right">250000원</td></tr>
+</table> -->
+<style>
+.container {
+    flex-direction: row;
+	justify-content: space-between;
+    display: flex;
+    font-size: 18px;
+}
+
+.column {
+    flex-direction: column;
+    display: flex;
+}
+.vcenter {
+    align-self: center;
+}
+.small {
+    font-size: 12px;
+}
+</style>
+
+<h2>계산결과</h2>
+<div class="container">
+    <div class="column">
+        <label>매도금액</label>
+        <label class="small">입력값</label>
+    </div>
+    <div class="vcenter">500,000,000원</div>
+</div>
+<hr>
+<div class="container">
+    <div class="column">
+        <label>상한요율</label>
+        <label class="small">5천만 원 미만 상한요율 0.6%</label>
+    </div>
+    <div class="vcenter">0.6%</div>
+</div>
+<hr>
+<div class="container">
+    <div class="column">
+        <label>한도액</label>
+        <label class="small">5천만 원 미만 한도액 25만원</label>
+    </div>
+    <div class="vcenter">250,000</div>
+</div>
+<hr>
+<div class="container">
+    <div class="column">
+        <label>중개수수료</label>
+        <label class="small">법정수수료</label>
+    </div>
+    <div class="vcenter">60,000</div>
+</div>
+<hr>
+<div class="container">
+    <div class="column">
+        <label>부가세포함</label>
+        <label class="small">VAT 10%포함</label>
+    </div>
+    <div class="vcenter">66,000</div>
+</div>
