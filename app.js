@@ -16,7 +16,6 @@ const crudRouter = require('./routes/crud');
 const analyzerRouter = require('./routes/analyzer');
 const articleRouter = require('./routes/article');
 const apiRouter = require('./routes/api');
-const feesRouter = require('./routes/fees');
 
 const app = express();
 
@@ -56,7 +55,7 @@ app.use('/crud', crudRouter);
 app.use('/analyzer', analyzerRouter);
 app.use('/article', articleRouter);
 app.use('/api', apiRouter);
-app.use('/fees', feesRouter);
+
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
