@@ -70,7 +70,7 @@ router.get('/', setLog, async function(req, res, next) {
     // });
     // res.send(arr);
 
-    res.send('api');
+    res.send('dev');
 });
 
 
