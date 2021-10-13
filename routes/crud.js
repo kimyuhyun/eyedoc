@@ -131,31 +131,15 @@ router.get('/iterator', userChecking, async function(req, res, next) {
     });
 });
 
-router.post('/write', userChecking, upload.array('FILES'), async function(req, res, next) {
+router.post('/write', userChecking, async function(req, res, next) {
     var table = req.body.table;
     var idx = req.body.idx;
-
-    var uploadedLength = 0;
-    if (req.body.UPLOADED_FILES != null && req.body.UPLOADED_FILES != '') {
-        uploadedLength = req.body.UPLOADED_FILES.split(',').length;
-    }
-
-    for (i in req.files) {
-        var fileIndex = Number(i) + Number(uploadedLength);
-        await utils.setResize(req.files[i]).then(function(newFileName) {
-            newFileName = process.env.HOST_NAME + '/' + newFileName;
-            console.log('newFileName', newFileName);
-            eval("req.body.filename" + fileIndex + " = newFileName");
-        });
-    }
 
     delete req.body.recid;
     delete req.body.table;
     delete req.body.idx;
     delete req.body.created;
     delete req.body.modified;
-    delete req.body.UPLOADED_FILES;
-    delete req.body.FILES;
 
     var sql = ""
     var records = new Array();
