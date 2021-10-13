@@ -50,7 +50,7 @@ router.get('/', function(req, res, next) {
     const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
 
     res.render('index', {
-        title: 'eyedoc api',
+        title: 'Eyedoc Api',
         session: `${ip}`,
         mode: process.env.NODE_ENV,
     });
