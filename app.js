@@ -16,6 +16,9 @@ const crudRouter = require('./routes/crud');
 const analyzerRouter = require('./routes/analyzer');
 const articleRouter = require('./routes/article');
 const apiRouter = require('./routes/api');
+const excelRouter = require('./routes/excel');
+const statRouter = require('./routes/stat');
+const imageRouter = require('./routes/image');
 
 const app = express();
 
@@ -55,6 +58,9 @@ app.use('/crud', crudRouter);
 app.use('/analyzer', analyzerRouter);
 app.use('/article', articleRouter);
 app.use('/api', apiRouter);
+app.use('/excel', excelRouter);
+app.use('/stat', statRouter);
+app.use('/image', imageRouter);
 
 
 // catch 404 and forward to error handler

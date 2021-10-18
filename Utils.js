@@ -3,6 +3,7 @@ const db = require('./db');
 const requestIp = require('request-ip');
 const axios = require('axios');
 const crypto = require('crypto');
+const utils = require('./Utils');
 
 class Utils {
     setSaveMenu(req) {
@@ -227,7 +228,177 @@ class Utils {
         return arr;
     }
 
-    
+    getAge(birth) {
+        var date = new Date();
+        var year = date.getFullYear();
+        var month = (date.getMonth() + 1);
+        var day = date.getDate();
+        if (month < 10) month = '0' + month;
+        if (day < 10) day = '0' + day;
+        var monthDay = month + day;
+        birth = birth.replace('-', '').replace('-', '');
+        var birthdayy = birth.substr(0, 4);
+        var birthdaymd = birth.substr(4, 4);
+        var age = monthDay < birthdaymd ? year - birthdayy - 1 : year - birthdayy;
+        return age + 1;
+    }
+
+    async getLawData() {
+        var tmpArr = {};
+        await new Promise(function(resolve, reject) {
+            const sql = `SELECT * FROM LAWDATA_tbl ORDER BY age ASC, rdata ASC`;
+            db.query(sql, function(err, rows, fields) {
+                if (!err) {
+                    resolve(rows);
+                } else {
+                    console.log(err);
+                    res.send(err);
+                    return;
+                }
+            });
+        }).then(function(data) {
+            var oldAge = 0;
+            for (var obj of data) {
+                if (oldAge != obj.age) {
+                    oldAge = obj.age;
+                    tmpArr[obj.age] = [];
+                    tmpArr[obj.age].push(obj.rdata);
+                } else {
+                    tmpArr[obj.age].push(obj.rdata);
+                }
+            }
+        });
+        return tmpArr;
+    }
+
+    async getEyePer(age, r_sph, r_cyl, l_sph, l_cyl) {
+        const self = this;
+
+        var r_se = eval(r_sph) + eval(r_cyl / 2);
+        r_se = r_se.toFixed(2);
+        var l_se = eval(l_sph) + eval(l_cyl / 2);
+        l_se = l_se.toFixed(2);
+
+        var arr = [];
+        await new Promise(function(resolve, reject) {
+            const sql = `SELECT rdata FROM LAWDATA_tbl WHERE age = ? ORDER BY rdata ASC`;
+            db.query(sql, age, function(err, rows, fields) {
+                if (!err) {
+                    resolve(rows);
+                } else {
+                    console.log(err);
+                    res.send(err);
+                    return;
+                }
+            });
+        }).then(function(data) {
+            for (obj of self.nvl(data)) {
+                arr.push(obj.rdata);
+            }
+        });
+
+        if (arr.length > 0) {
+
+            var tmp = 0;
+            var r_per = 0;
+            var l_per = 0;
+
+            //우안
+            try {
+                tmp = await self.percentRank(arr, r_se);
+            } catch (e) {
+                if ((r_se * 100) < 0) {
+                    tmp = await self.percentRank(arr, arr[0]);
+                } else {
+                    tmp = await self.percentRank(arr, arr[arr.length-1]);
+                }
+            }
+            tmp  = await self.formatter(tmp);
+            tmp = 1 - tmp;
+            r_per = 100 * tmp;
+            r_per = r_per * -1;
+            //
+
+            //좌안
+            try {
+                tmp = await self.percentRank(arr, l_se);
+            } catch (e) {
+                if ((l_se * 100) < 0) {
+                    tmp = await self.percentRank(arr, arr[0]);
+                } else {
+                    tmp = await self.percentRank(arr, arr[arr.length-1]);
+                }
+            }
+            tmp  = await self.formatter(tmp);
+            tmp = 1 - tmp;
+            l_per = 100 * tmp;
+            l_per = l_per * -1;
+            //
+        } else {
+            r_per = 0;
+            l_per = 0;
+        }
+
+        var obj = {
+            r_se: r_se,
+            r_per: r_per.toFixed(1),
+            l_se: l_se,
+            l_per: l_per.toFixed(1),
+        };
+
+        return obj;
+    }
+
+
+    async percentRank (arr, value) {
+        const self = this;
+        var result = 0;
+        for (let i = 0; i < arr.length; i++) {
+            if (arr[i] == value) {
+                return i / (arr.length - 1);
+            }
+        }
+        let x1, x2, y1, y2;
+        for (let i = 0; i < arr.length - 1; i++) {
+            if (arr[i] < value && value < arr[i + 1]) {
+
+                x1 = arr[i];
+                x2 = arr[i + 1];
+                // console.log(x1, x2, (value * 100));
+                if ((value * 100) < 0) {
+                    result = await self.percentRank2(arr, x1);
+                } else {
+                    result = await self.percentRank2(arr, x2);
+                }
+                return result;
+            }
+        }
+        throw new Error('Out of bounds');
+    };
+
+    async percentRank2 (arr, v) {
+        if (typeof v !== 'number') throw new TypeError('v must be a number');
+        for (var i = 0, l = arr.length; i < l; i++) {
+            if (v <= arr[i]) {
+                while (i < l && v === arr[i]) i++;
+                if (i === 0) return 0;
+                if (v !== arr[i-1]) {
+                    i += (v - arr[i-1]) / (arr[i] - arr[i-1]);
+                }
+                return i / l;
+            }
+        }
+        return 1;
+    }
+
+    async formatter (num) {
+        var tmp = '' + num;
+        tmp = tmp.split('.');
+        if (tmp.length == 1) {
+            return num;
+        }
+        return `${ tmp[0] }.${ tmp[1].substring(0,3) }`;
+    }
 }
 
 module.exports = new Utils();
