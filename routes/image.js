@@ -8,6 +8,8 @@ const sharp = require('sharp');
 const cors = require('cors');
 
 
+require('dotenv').config();
+
 var upload = multer({
     storage: multer.diskStorage({
         destination: function(req, file, cb) {
@@ -39,10 +41,17 @@ var upload = multer({
     })
 });
 
+/* GET home page. */
+router.get('/', function(req, res, next) {
+    res.render('index', {
+        title: 'Image server',
+    });
+});
+
 router.get('/file_upload', function(req, res, next) {
-    const host_name = 'http://' + req.get('host');
+    console.log(process.env.HOST_NAME);
     var html = `
-        <div>${ host_name }</div>
+        <div>`+process.env.HOST_NAME+`</div>
         <form method='post' action='./file_upload' enctype='multipart/form-data'>
             <input type='file' name='upload_file' />
             <input type='submit'>
@@ -57,7 +66,7 @@ router.post('/file_upload', cors(), upload.single('upload_file'), async function
     var type = '';
 
     await new Promise(function(resolve, reject) {
-        var destWidth = 800;
+        var destWidth = 1080;
         var tmp = file.originalname.split('.');
         var mimeType = tmp[tmp.length - 1];
         tmp = file.filename.split('.');
@@ -115,11 +124,10 @@ router.post('/file_upload', cors(), upload.single('upload_file'), async function
 
 
     var interval = setInterval(function() {
-        const host_name = 'http://' + req.get('host');
         console.log(isFileUploaded(result));
         if (isFileUploaded(result)) {
             clearInterval(interval);
-            var path = host_name + '/' + result;
+            var path = process.env.HOST_NAME + '/' + result;
             // res.send("<img src='" + path + "'/>");
 
             res.send({
