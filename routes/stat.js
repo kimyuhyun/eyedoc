@@ -11,12 +11,46 @@ const percentIle = require('percentile');
 
 
 // ?age=5&r_sph=-1&r_cyl=-1&l_sph=-1&l_cyl=-1
-router.get('/get_eye_per', async function(req, res, next) {
+router.get('/get_eyes_per', async function(req, res, next) {
     const { age, r_sph, r_cyl, l_sph, l_cyl } = req.query;
 
-    var obj = await utils.getEyePer(age, r_sph, r_cyl, l_sph, l_cyl);
-    console.log(obj);
+    var obj = await utils.getEyesPer(age, r_sph, r_cyl, l_sph, l_cyl);
+    obj.age = age;
     res.send(obj);
+});
+
+
+router.get('/get_eyes_ile', async function(req, res, next) {
+    const { age, r_sph, r_cyl, l_sph, l_cyl } = req.query;
+
+    var tmpAge = 0;
+    var obj = await utils.getEyesPer(age, r_sph, r_cyl, l_sph, l_cyl);
+    var tmpArr = await utils.getLawData();
+    obj.age = age;
+
+    if (age > 18) {
+        tmpAge = 18;
+    } else {
+        tmpAge = age;
+    }
+
+    var rIleArr = [];
+    var lIleArr = [];
+
+    if (obj.r_per != 0 && obj.l_per != 0) {
+        var r_per = 0, l_per = 0;
+         r_per = 100 + eval(obj.r_per);
+         l_per = 100 + eval(obj.l_per);
+         rIleArr.push(percentIle(r_per, tmpArr[tmpAge]));
+         lIleArr.push(percentIle(l_per, tmpArr[tmpAge]));
+    }
+
+    var arr = {
+        age: tmpAge,
+        r_ile_arr: rIleArr,
+        l_ile_arr: lIleArr,
+    };
+    res.send(arr);
 });
 
 
@@ -81,7 +115,7 @@ router.get('/get_default_data', async function(req, res, next) {
 //     });
 //     return tmpArr;
 // }
-// async function getEyePer2(age, r_sph, r_cyl, l_sph, l_cyl) {
+// async function getEyesPer2(age, r_sph, r_cyl, l_sph, l_cyl) {
 //     var r_se = eval(r_sph) + eval(r_cyl / 2);
 //     r_se = r_se.toFixed(2);
 //     var l_se = eval(l_sph) + eval(l_cyl / 2);

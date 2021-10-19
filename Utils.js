@@ -240,7 +240,22 @@ class Utils {
         var birthdayy = birth.substr(0, 4);
         var birthdaymd = birth.substr(4, 4);
         var age = monthDay < birthdaymd ? year - birthdayy - 1 : year - birthdayy;
-        return age + 1;
+        return age;
+    }
+
+    getAge2(birth, year) {
+        var date = new Date(year);
+        var year = date.getFullYear();
+        var month = (date.getMonth() + 1);
+        var day = date.getDate();
+        if (month < 10) month = '0' + month;
+        if (day < 10) day = '0' + day;
+        var monthDay = month + day;
+        birth = birth.replace('-', '').replace('-', '');
+        var birthdayy = birth.substr(0, 4);
+        var birthdaymd = birth.substr(4, 4);
+        var age = monthDay < birthdaymd ? year - birthdayy - 1 : year - birthdayy;
+        return age;
     }
 
     async getLawData() {
@@ -271,11 +286,16 @@ class Utils {
         return tmpArr;
     }
 
-    async getEyePer(age, r_sph, r_cyl, l_sph, l_cyl) {
+    async getEyesPer(age, r_sph, r_cyl, l_sph, l_cyl) {
         const self = this;
+
+        if (age > 18) {
+            age = 18;
+        }
 
         var r_se = eval(r_sph) + eval(r_cyl / 2);
         r_se = r_se.toFixed(2);
+
         var l_se = eval(l_sph) + eval(l_cyl / 2);
         l_se = l_se.toFixed(2);
 
@@ -340,9 +360,9 @@ class Utils {
         }
 
         var obj = {
-            r_se: r_se,
+            // r_se: r_se,
+            // l_se: l_se,
             r_per: r_per.toFixed(1),
-            l_se: l_se,
             l_per: l_per.toFixed(1),
         };
 

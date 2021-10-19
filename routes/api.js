@@ -263,9 +263,22 @@ router.post('/set_family_select', setLog, async function(req, res, next) {
 router.get('/get_eyes_data_list/:memb_idx', async function(req, res, next) {
     const memb_idx = req.params.memb_idx;
 
-    var arr = [];
+    var arr = {};
+    var ageArr = [];
+
     await new Promise(function(resolve, reject) {
-        const sql = `SELECT idx, wdate, r_sph, r_cyl, l_sph, l_cyl FROM EYES_DATA_tbl WHERE memb_idx = ? ORDER BY wdate DESC, created DESC `;
+        const sql = `
+            SELECT
+            idx,
+            wdate,
+            r_sph,
+            r_cyl,
+            l_sph,
+            l_cyl,
+            (SELECT birth FROM MEMB_tbl WHERE idx = A.memb_idx) as birth
+            FROM EYES_DATA_tbl as A
+            WHERE memb_idx = ?
+            ORDER BY wdate DESC, created DESC `;
         db.query(sql, memb_idx, function(err, rows, fields) {
             if (!err) {
                 resolve(rows);
@@ -279,7 +292,19 @@ router.get('/get_eyes_data_list/:memb_idx', async function(req, res, next) {
         var r_se = 0;
         var l_se = 0;
 
+        var tmp = '', oldAge = '';
+
+
+        arr.list = [];
+
         for (obj of data) {
+            tmp = utils.getAge2(obj.birth, obj.wdate.split('-')[0]);
+            if (tmp != oldAge) {
+                oldAge = tmp;
+                obj.age = tmp;
+                ageArr.push(obj);
+            }
+
             r_se = eval(obj.r_sph) + eval(obj.r_cyl / 2);
             r_se = r_se.toFixed(2);
 
@@ -289,9 +314,48 @@ router.get('/get_eyes_data_list/:memb_idx', async function(req, res, next) {
             obj.r_se = r_se;
             obj.l_se = l_se;
 
-            arr.push(obj);
+            arr.list.push(obj);
         }
     });
+
+
+    var tmpArr = await utils.getLawData();
+    var tmpAge = 0;
+    var ileObj = {};
+    var rIleArr = [];
+    var lIleArr = [];
+
+    for (obj of ageArr) {
+
+        var row = await utils.getEyesPer(obj.age, obj.r_sph, obj.r_cyl, obj.l_sph, obj.l_cyl);
+        if (obj.age > 18) {
+            tmpAge = 18;
+        } else {
+            tmpAge = obj.age;
+        }
+
+        if (row.r_per != 0 && row.l_per != 0) {
+            var r_per = 0, l_per = 0;
+             r_per = 100 + eval(row.r_per);
+             l_per = 100 + eval(row.l_per);
+             rIleArr.push({
+                 age: tmpAge,
+                 val: percentIle(r_per, tmpArr[tmpAge]),
+             });
+
+             lIleArr.push({
+                 age: tmpAge,
+                 val: percentIle(l_per, tmpArr[tmpAge]),
+             });
+             // lIleObj.
+             // rIleArr.push();
+             // lIleArr.push(percentIle(l_per, tmpArr[tmpAge]));
+        }
+    }
+
+    arr.r_ile_arr = rIleArr;
+    arr.l_ile_arr = lIleArr;
+
     res.send(arr);
 });
 
@@ -320,7 +384,7 @@ router.get('/get_eyes_data_datail/:idx', async function(req, res, next) {
         arr = utils.nvl(data);
     });
 
-    const obj = await utils.getEyePer(utils.getAge(arr.birth), arr.r_sph, arr.r_cyl, arr.l_sph, arr.l_cyl);
+    const obj = await utils.getEyesPer(utils.getAge(arr.birth), arr.r_sph, arr.r_cyl, arr.l_sph, arr.l_cyl);
     var tmpArr = await utils.getLawData();
     var rIleArr = [];
     var lIleArr = [];
