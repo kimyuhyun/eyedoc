@@ -154,7 +154,7 @@ router.get('/get_family_list/:pid', setLog, async function(req, res, next) {
 
     var arr = [];
     await new Promise(function(resolve, reject) {
-        const sql = `SELECT idx, id, name1, birth, gender, is_selected FROM MEMB_tbl WHERE pid = ?`;
+        const sql = `SELECT idx, id, name1, birth, gender, is_selected FROM MEMB_tbl WHERE pid = ? ORDER BY birth ASC`;
         db.query(sql, pid, function(err, rows, fields) {
             if (!err) {
                 resolve(rows);
