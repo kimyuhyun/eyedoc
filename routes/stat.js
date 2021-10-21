@@ -28,8 +28,8 @@ router.get('/get_eyes_ile', async function(req, res, next) {
     var tmpArr = await utils.getLawData();
     obj.age = age;
 
-    if (age > 18) {
-        tmpAge = 18;
+    if (age > 16) {
+        tmpAge = 16;
     } else {
         tmpAge = age;
     }
