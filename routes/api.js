@@ -336,8 +336,8 @@ router.get('/get_eyes_data_list/:memb_idx', async function(req, res, next) {
     for (obj of ageArr) {
 
         var row = await utils.getEyesPer(obj.age, obj.r_sph, obj.r_cyl, obj.l_sph, obj.l_cyl);
-        if (obj.age > 16) {
-            tmpAge = 16;
+        if (obj.age > 18) {
+            tmpAge = 18;
         } else {
             tmpAge = obj.age;
         }
