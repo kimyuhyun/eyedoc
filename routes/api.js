@@ -265,6 +265,7 @@ router.get('/get_eyes_data_list/:memb_idx', async function(req, res, next) {
 
     var arr = {};
     var ageArr = [];
+    var eyeWashArr = [];
 
     await new Promise(function(resolve, reject) {
         const sql = `
@@ -275,6 +276,7 @@ router.get('/get_eyes_data_list/:memb_idx', async function(req, res, next) {
             r_cyl,
             l_sph,
             l_cyl,
+            is_eyewash,
             (SELECT birth FROM MEMB_tbl WHERE idx = A.memb_idx) as birth
             FROM EYES_DATA_tbl as A
             WHERE memb_idx = ?
@@ -293,7 +295,6 @@ router.get('/get_eyes_data_list/:memb_idx', async function(req, res, next) {
         var l_se = 0;
 
         var tmp = '', oldAge = '';
-
 
         arr.list = [];
 
@@ -315,6 +316,12 @@ router.get('/get_eyes_data_list/:memb_idx', async function(req, res, next) {
             obj.l_se = l_se;
 
             arr.list.push(obj);
+
+            //안약사용 배열생성
+            if (obj.is_eyewash == 1) {
+                eyeWashArr.push(tmp);
+            }
+            //
         }
     });
 
@@ -324,6 +331,7 @@ router.get('/get_eyes_data_list/:memb_idx', async function(req, res, next) {
     var ileObj = {};
     var rIleArr = [];
     var lIleArr = [];
+
 
     for (obj of ageArr) {
 
@@ -355,6 +363,7 @@ router.get('/get_eyes_data_list/:memb_idx', async function(req, res, next) {
 
     arr.r_ile_arr = rIleArr;
     arr.l_ile_arr = lIleArr;
+    arr.eye_wash_arr= eyeWashArr;
 
     res.send(arr);
 });
