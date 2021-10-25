@@ -19,6 +19,7 @@ const apiRouter = require('./routes/api');
 const excelRouter = require('./routes/excel');
 const statRouter = require('./routes/stat');
 const imageRouter = require('./routes/image');
+const termsRouter = require('./routes/terms');
 
 const app = express();
 
@@ -61,6 +62,7 @@ app.use('/api', apiRouter);
 app.use('/excel', excelRouter);
 app.use('/stat', statRouter);
 app.use('/image', imageRouter);
+app.use('/terms', termsRouter);
 
 
 // catch 404 and forward to error handler
