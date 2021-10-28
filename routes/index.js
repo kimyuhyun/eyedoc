@@ -56,4 +56,16 @@ router.get('/', function(req, res, next) {
     });
 });
 
+router.post('/post', function(req, res, next) {
+    const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+
+    res.send({
+        id: req.body.id,
+        name: req.body.name,
+        title: 'Eyedoc Api',
+        session: `${ip}`,
+        mode: process.env.NODE_ENV,
+    });
+});
+
 module.exports = router;

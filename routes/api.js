@@ -332,6 +332,13 @@ router.get('/get_eyes_data_list/:memb_idx', async function(req, res, next) {
     var rIleArr = [];
     var lIleArr = [];
 
+    //나이순으로 정렬!!
+    ageArr.sort(function (a, b) {
+    	return a.age < b.age ? -1 : a.age > b.age ? 1 : 0;
+    });
+
+    eyeWashArr.sort();
+    //
 
     for (obj of ageArr) {
 
