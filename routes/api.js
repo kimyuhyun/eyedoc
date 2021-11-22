@@ -341,13 +341,15 @@ router.get('/get_eyes_data_list/:memb_idx', async function(req, res, next) {
     //
 
     for (obj of ageArr) {
-
+        // console.log(obj.age, obj.r_sph, obj.r_cyl, obj.l_sph, obj.l_cyl);
         var row = await utils.getEyesPer(obj.age, obj.r_sph, obj.r_cyl, obj.l_sph, obj.l_cyl);
         if (obj.age > 18) {
             tmpAge = 18;
         } else {
             tmpAge = obj.age;
         }
+
+
 
         if (row.r_per != 0 && row.l_per != 0) {
             var r_per = 0, l_per = 0;
@@ -400,7 +402,7 @@ router.get('/get_eyes_data_datail/:idx', async function(req, res, next) {
         arr = utils.nvl(data);
     });
 
-    const obj = await utils.getEyesPer(utils.getAge(arr.birth), arr.r_sph, arr.r_cyl, arr.l_sph, arr.l_cyl);
+
     var tmpArr = await utils.getLawData();
     var rIleArr = [];
     var lIleArr = [];
@@ -408,9 +410,11 @@ router.get('/get_eyes_data_datail/:idx', async function(req, res, next) {
     // if (obj.r_per != 0 && obj.l_per != 0) {
     var r_per = 0, l_per = 0;
     for (var i=5;i<=18;i++) {
+        var obj = await utils.getEyesPer(i, arr.r_sph, arr.r_cyl, arr.l_sph, arr.l_cyl);
+// console.log(obj);
          r_per = 100 + eval(obj.r_per);
          l_per = 100 + eval(obj.l_per);
-
+// console.log(r_per,l_per);
          rIleArr.push(percentIle(r_per, tmpArr[i]));
          lIleArr.push(percentIle(l_per, tmpArr[i]));
     }
