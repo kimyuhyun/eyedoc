@@ -405,15 +405,16 @@ router.get('/get_eyes_data_datail/:idx', async function(req, res, next) {
     var rIleArr = [];
     var lIleArr = [];
 
-    if (obj.r_per != 0 && obj.l_per != 0) {
-        var r_per = 0, l_per = 0;
-        for (var i=5;i<=18;i++) {
-             r_per = 100 + eval(obj.r_per);
-             l_per = 100 + eval(obj.l_per);
-             rIleArr.push(percentIle(r_per, tmpArr[i]));
-             lIleArr.push(percentIle(l_per, tmpArr[i]));
-        }
+    // if (obj.r_per != 0 && obj.l_per != 0) {
+    var r_per = 0, l_per = 0;
+    for (var i=5;i<=18;i++) {
+         r_per = 100 + eval(obj.r_per);
+         l_per = 100 + eval(obj.l_per);
+
+         rIleArr.push(percentIle(r_per, tmpArr[i]));
+         lIleArr.push(percentIle(l_per, tmpArr[i]));
     }
+    // }
 
     arr.age = utils.getAge(arr.birth);
 

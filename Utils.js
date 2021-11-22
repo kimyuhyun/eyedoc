@@ -273,6 +273,8 @@ class Utils {
     async getEyesPer(age, r_sph, r_cyl, l_sph, l_cyl) {
         const self = this;
 
+        // console.log(age, r_sph, r_cyl, l_sph, l_cyl);
+
         if (age > 18) {
             age = 18;
         }
@@ -282,6 +284,8 @@ class Utils {
 
         var l_se = eval(l_sph) + eval(l_cyl / 2);
         l_se = l_se.toFixed(2);
+
+// console.log(r_se, l_se);
 
         var arr = [];
         await new Promise(function(resolve, reject) {
@@ -344,8 +348,8 @@ class Utils {
         }
 
         var obj = {
-            // r_se: r_se,
-            // l_se: l_se,
+            r_se: r_se,
+            l_se: l_se,
             r_per: r_per.toFixed(1),
             l_per: l_per.toFixed(1),
         };
