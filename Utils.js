@@ -58,6 +58,25 @@ class Utils {
         });
     }
 
+    async queryResult(sql, params) {
+        var arr = [];
+        await new Promise(function(resolve, reject) {
+            db.query(sql, params, function(err, rows, fields) {
+                if (!err) {
+                    resolve(rows);
+                } else {
+                    reject(err);
+                }
+            });
+        }).then(async function(data) {
+            arr = data;
+        }).catch(function(reason) {
+            arr = reason;
+        });
+        arr = await this.nvl(arr);
+        return arr;
+    }
+
     async sendPush(id, msg, menu_flag) {
         var fcmArr = [];
         await new Promise(function(resolve, reject) {

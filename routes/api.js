@@ -432,25 +432,55 @@ console.log(r_per,l_per);
 
 });
 
+router.get('/get_eye_predict/:idx', setLog, async function(req, res, next) {
+    const idx = req.params.idx;
+
+    var sql = `
+        SELECT
+        A.r_sph,
+        A.r_cyl,
+        A.l_sph,
+        A.l_cyl,
+        (SELECT birth FROM MEMB_tbl WHERE idx = A.memb_idx) as birth
+        FROM
+        EYES_DATA_tbl as A
+        WHERE A.idx = ?
+    `;
+    var data = await utils.queryResult(sql, [idx]);
+    var arr = data[0];
+
+    console.log(arr);
+
+    let obj = await utils.getEyesPer(utils.getAge(arr.birth), arr.r_sph, arr.r_cyl, arr.l_sph, arr.l_cyl);
+    var tmpArr = await utils.getLawData();
+    var rIleArr = [];
+    var lIleArr = [];
+
+    var r_per = 0, l_per = 0, age = utils.getAge(arr.birth);
+    for (var i = 5; i <= 18; i++) {
+        if (i >= age) {
+            r_per = 100 + eval(obj.r_per);
+            l_per = 100 + eval(obj.l_per);
+            console.log(r_per,l_per, i);
+            rIleArr.push(percentIle(r_per, tmpArr[i]));
+            lIleArr.push(percentIle(l_per, tmpArr[i]));
+        }
+    }
+    
+    var rtnObj = {};
+    rtnObj.age = utils.getAge(arr.birth);
+    rtnObj.r_ile_arr = rIleArr;
+    rtnObj.l_ile_arr = lIleArr;
+
+    res.send(rtnObj);
+});
+
 router.get('/', setLog, async function(req, res, next) {
 
-    // var arr = [];
-    // await new Promise(function(resolve, reject) {
-    //     const sql = ``;
-    //     db.query(sql, function(err, rows, fields) {
-    //         console.log(rows);
-    //         if (!err) {
-    //             resolve(rows);
-    //         } else {
-    //             console.log(err);
-    //             res.send(err);
-    //             return;
-    //         }
-    //     });
-    // }).then(function(data) {
-    //     arr = utils.nvl(data);
-    // });
-    // res.send(arr);
+    // var sql = ``;
+    // var params = [];
+    // var arr = await utils.queryResult(sql, params);
+    // console.log(arr);
 
     res.send('api');
 });
