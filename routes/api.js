@@ -69,7 +69,7 @@ router.get('/is_member/:id', setLog, async function(req, res, next) {
 
     if (cnt > 0) {
         await new Promise(function(resolve, reject) {
-            const sql = `SELECT idx, pid, id, name1, birth, gender, email FROM MEMB_tbl WHERE id = ?`;
+            const sql = `SELECT idx, pid, id, name1, birth, gender, email, filename0 FROM MEMB_tbl WHERE id = ?`;
             db.query(sql, id, function(err, rows, fields) {
                 console.log(rows);
                 if (!err) {
@@ -88,7 +88,7 @@ router.get('/is_member/:id', setLog, async function(req, res, next) {
         });
 
         await new Promise(function(resolve, reject) {
-            const sql = `SELECT idx, name1, birth FROM MEMB_tbl WHERE pid = ? AND is_selected = 1`;
+            const sql = `SELECT idx, name1, birth, filename0 FROM MEMB_tbl WHERE pid = ? AND is_selected = 1`;
             db.query(sql, [id, id], function(err, rows, fields) {
                 console.log(rows);
                 if (!err) {
@@ -104,10 +104,12 @@ router.get('/is_member/:id', setLog, async function(req, res, next) {
                 arr.selected_idx = data.idx;
                 arr.selected_name1 = data.name1;
                 arr.selected_birth = data.birth;
+                arr.selected_filename0 = data.filename0;
             } else {
                 arr.selected_idx = arr.idx;
                 arr.selected_name1 = arr.name1;
                 arr.selected_birth = arr.birth;
+                arr.selected_filename0 = arr.filename0;
             }
             arr.code = 1;
         });
@@ -149,138 +151,44 @@ router.post('/register', setLog, async function(req, res, next) {
     });
 });
 
-router.get('/get_family_list/:pid', setLog, async function(req, res, next) {
-    const pid = req.params.pid;
-
-    var arr = [];
-    await new Promise(function(resolve, reject) {
-        const sql = `SELECT idx, id, name1, birth, gender, is_selected FROM MEMB_tbl WHERE pid = ? ORDER BY birth ASC`;
-        db.query(sql, pid, function(err, rows, fields) {
-            if (!err) {
-                resolve(rows);
-            } else {
-                console.log(err);
-                res.send(err);
-                return;
-            }
-        });
-    }).then(function(data) {
-        arr = utils.nvl(data);
-    });
-    res.send(arr);
-});
-
-router.get('/get_family_detail/:idx', setLog, async function(req, res, next) {
-    const idx = req.params.idx;
-
-    var arr = {};
-    await new Promise(function(resolve, reject) {
-        const sql = `SELECT idx, id, name1, birth, gender FROM MEMB_tbl WHERE idx = ?`;
-        db.query(sql, idx, function(err, rows, fields) {
-            if (!err) {
-                resolve(rows[0]);
-            } else {
-                console.log(err);
-                res.send(err);
-                return;
-            }
-        });
-    }).then(function(data) {
-        arr = utils.nvl(data);
-    });
-    res.send(arr);
-});
-
-router.get('/get_family_select_check/:pid', setLog, async function(req, res, next) {
-    const pid = req.params.pid;
-
-    await new Promise(function(resolve, reject) {
-        const sql = `SELECT COUNT(*) as cnt FROM MEMB_tbl WHERE is_selected = 1 AND pid = ?`;
-        db.query(sql, pid, function(err, rows, fields) {
-            if (!err) {
-                resolve(rows[0]);
-            } else {
-                console.log(err);
-                res.send(err);
-                return;
-            }
-        });
-    }).then(function (data) {
-        res.send({ cnt: data.cnt });
-    });
-});
-
-
-router.post('/set_family_select', setLog, async function(req, res, next) {
-    const { pid, idx } = req.body;
-
-    await new Promise(function(resolve, reject) {
-        const sql = `UPDATE MEMB_tbl SET is_selected = 0 WHERE pid = ?`;
-        db.query(sql, pid, function(err, rows, fields) {
-            if (!err) {
-                resolve(rows);
-            } else {
-                console.log(err);
-                res.send(err);
-                return;
-            }
-        });
-    }).then();
-
-    await new Promise(function(resolve, reject) {
-        const sql = `UPDATE MEMB_tbl SET is_selected = 1 WHERE pid = ? AND idx = ?`;
-        db.query(sql, [pid, idx], function(err, rows, fields) {
-            if (!err) {
-                resolve(rows);
-            } else {
-                console.log(err);
-                res.send(err);
-                return;
-            }
-        });
-    }).then();
-
-    var arr = {};
-    await new Promise(function(resolve, reject) {
-        const sql = `SELECT idx, name1, birth FROM MEMB_tbl WHERE pid = ? AND is_selected = 1`;
-        db.query(sql, pid, function(err, rows, fields) {
-            if (!err) {
-                resolve(rows[0]);
-            } else {
-                console.log(err);
-                res.send(err);
-                return;
-            }
-        });
-    }).then(function(data) {
-        arr = utils.nvl(data);
-    });
-
-    res.send(arr);
-});
-
 
 router.get('/get_eyes_data_list/:memb_idx', async function(req, res, next) {
     const memb_idx = req.params.memb_idx;
+    const limit = req.query.limit;
+    var page = req.query.page;
+
+    if (!page) {
+        page = 1;
+    }
+
+    page = (page - 1) * limit;
 
     var arr = {};
     var ageArr = [];
     var eyeWashArr = [];
 
     await new Promise(function(resolve, reject) {
-        const sql = `
+        var sql = `
             SELECT
             idx,
             wdate,
             r_sph,
             r_cyl,
+            r_axis,
             l_sph,
             l_cyl,
+            l_axis,
             is_eyewash,
+            hospital,
+            filename0,
             (SELECT birth FROM MEMB_tbl WHERE idx = A.memb_idx) as birth
             FROM EYES_DATA_tbl as A
             WHERE memb_idx = ?
-            ORDER BY wdate DESC, created DESC `;
+            ORDER BY wdate DESC, created DESC 
+            LIMIT ${page}, ${limit} 
+        `;
+        
+
         db.query(sql, memb_idx, function(err, rows, fields) {
             if (!err) {
                 resolve(rows);
@@ -291,6 +199,7 @@ router.get('/get_eyes_data_list/:memb_idx', async function(req, res, next) {
             }
         });
     }).then(function(data) {
+        data = utils.nvl(data);
         var r_se = 0;
         var l_se = 0;
 
@@ -447,9 +356,8 @@ router.get('/get_eye_predict/:idx', setLog, async function(req, res, next) {
         WHERE A.idx = ?
     `;
     var data = await utils.queryResult(sql, [idx]);
+    console.log(data);
     var arr = data[0];
-
-    console.log(arr);
 
     let obj = await utils.getEyesPer(utils.getAge(arr.birth), arr.r_sph, arr.r_cyl, arr.l_sph, arr.l_cyl);
     var tmpArr = await utils.getLawData();
@@ -457,17 +365,27 @@ router.get('/get_eye_predict/:idx', setLog, async function(req, res, next) {
     var lIleArr = [];
 
     var r_per = 0, l_per = 0, age = utils.getAge(arr.birth);
+
+    if (age < 5) {
+        res.send({
+            code: 0,
+            msg: `만 5세 ~ 만 18세 사이의 데이터만 제공되고 있습니다.`,
+        });
+        return;
+    }
+    
     for (var i = 5; i <= 18; i++) {
         if (i >= age) {
             r_per = 100 + eval(obj.r_per);
             l_per = 100 + eval(obj.l_per);
-            console.log(r_per,l_per, i);
+            // console.log(r_per,l_per, i);
             rIleArr.push(percentIle(r_per, tmpArr[i]));
             lIleArr.push(percentIle(l_per, tmpArr[i]));
         }
     }
     
     var rtnObj = {};
+    rtnObj.code = 1;
     rtnObj.age = utils.getAge(arr.birth);
     rtnObj.r_ile_arr = rIleArr;
     rtnObj.l_ile_arr = lIleArr;

@@ -15,11 +15,16 @@ const adminRouter = require('./routes/admin');
 const crudRouter = require('./routes/crud');
 const analyzerRouter = require('./routes/analyzer');
 const articleRouter = require('./routes/article');
+
 const apiRouter = require('./routes/api');
+const familyRouter = require('./routes/family');
+
 const excelRouter = require('./routes/excel');
 const statRouter = require('./routes/stat');
 const imageRouter = require('./routes/image');
 const termsRouter = require('./routes/terms');
+
+const insightRouter = require('./routes/insight');
 
 const app = express();
 
@@ -58,11 +63,16 @@ app.use('/admin', adminRouter);
 app.use('/crud', crudRouter);
 app.use('/analyzer', analyzerRouter);
 app.use('/article', articleRouter);
+
 app.use('/api', apiRouter);
+app.use('/family', familyRouter);
+
 app.use('/excel', excelRouter);
 app.use('/stat', statRouter);
 app.use('/image', imageRouter);
 app.use('/terms', termsRouter);
+
+app.use('/insight', insightRouter);
 
 
 // catch 404 and forward to error handler

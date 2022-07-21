@@ -142,7 +142,9 @@ router.post('/write', userChecking, async function(req, res, next) {
     delete req.body.modified;
 
     var sql = ""
-    var records = new Array();
+    var records = [];
+
+    records.push(table);
 
     for (key in req.body) {
         if (req.body[key] != 'null') {
@@ -151,37 +153,33 @@ router.post('/write', userChecking, async function(req, res, next) {
             } else {
                 sql += key + '= ?, ';
             }
-
             records.push(req.body[key]);
         }
     }
 
-    // console.log(records);return;
-
     if (idx == null) {
-        sql = "INSERT INTO " + table + " SET " + sql + " created = NOW(), modified = NOW()";
+        sql = `INSERT INTO ?? SET ${sql} created = NOW(), modified = NOW()`;
         await db.query(sql, records, function(err, rows, fields) {
             if (!err) {
-                var arr = new Object();
-                arr['code'] = 1;
-                arr['msg'] = '등록 되었습니다.';
-                res.send(arr);
+                res.send(rows);
             } else {
                 res.send(err);
             }
         });
     } else {
         records.push(idx);
-        sql = "UPDATE " + table + " SET " + sql + " modified = NOW() WHERE idx = ?";
+        // sql = "UPDATE " + table + " SET " + sql + " modified = NOW() WHERE idx = ?";
+        sql = `UPDATE ?? SET ${sql} modified = NOW() WHERE idx = ?`;
         await db.query(sql, records, function(err, rows, fields) {
             if (!err) {
-                db.query("SELECT * FROM " + table + " WHERE idx = ?", idx, function(err, rows, fields) {
-                    var arr = new Object();
-                    arr['code'] = 2;
-                    arr['msg'] = '수정 되었습니다.';
-                    arr['record'] = rows[0];
-                    res.send(arr);
-                });
+                // db.query("SELECT * FROM " + table + " WHERE idx = ?", idx, function(err, rows, fields) {
+                //     var arr = new Object();
+                //     arr['code'] = 2;
+                //     arr['msg'] = '수정 되었습니다.';
+                //     arr['record'] = rows[0];
+                //     res.send(arr);
+                // });
+                res.send(rows);
             } else {
                 res.send(err);
             }

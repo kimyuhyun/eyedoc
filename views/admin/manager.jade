@@ -3,12 +3,11 @@ extends layout
 block content
 
     div(class='row')
-        div(class='col-12 col-md-8 mt-4')
-            div(id='grid' style='width: 100%; height: 730px;')
+        div(class='col-12 col-md-8 p-0')
+            div(id='grid' style='width: 100%; height: 700px;')
 
-
-        div(class='col-12 col-md-4 mt-4')
-            div(id='form')
+        div(class='col-12 col-md-4 p-0')
+            div(id='form' style='border-left: 0px; border-radius: 0px;')
                 div(class='w2ui-page page-0')
                     div(class='w2ui-field w2ui-span2')
                         label 아이디
@@ -157,14 +156,11 @@ block content
                         this.record.table = table;
                         //
 
-                        var formData = new FormData();
-                        var self = this;
+                        var params = new URLSearchParams();
                         for (var key in this.record) {
-                            formData.append(key, self.record[key]);
+                            params.append(key, this.record[key]);
                         }
-
-
-                        axios.post('/crud/write', formData).then(function(res) {
+                        axios.post('/crud/write', params).then(function (res) {
                             console.dir(res.data);
                             $("#save").text("입력");
                             formClear();

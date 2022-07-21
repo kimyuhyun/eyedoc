@@ -1,8 +1,8 @@
 extends layout
 
 block content
-    div(class='row')
-        div(class='col-12 col-md-6 offset-md-3')
+    div(class='row mt-5')
+        div(class='col-12 col-md-8 offset-md-2')
             div(id='form')
                 div(class='w2ui-page page-0')
                     div(class='w2ui-field w2ui-span2')
@@ -27,6 +27,8 @@ block content
 
                 div(class='w2ui-buttons')
                     button(class='w2ui-btn w2ui-btn-blue' name='save' id='save') 입력
+
+            
 
 
 
@@ -72,16 +74,13 @@ block content
                             delete this.record.pass1;
                         }
                         
-                        var formData = new FormData();
-                        var self = this;
+                        var params = new URLSearchParams();
                         for (var key in this.record) {
-                            formData.append(key, self.record[key]);
+                            params.append(key, this.record[key]);
                         }
-                        
-                        
-                        axios.post('/crud/write', formData).then(function(res) {
+                        axios.post('/crud/write', params).then(function (res) {
                             console.dir(res.data);
-                            w2alert(res.data.msg).done(function() {
+                            w2alert('수정되었습니다.').done(function() {
                                 location.reload();
                             });
                             

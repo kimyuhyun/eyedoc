@@ -18,33 +18,16 @@ var menu = [{
         "title": "게시판",
         "child": [
             {
-                "title": "공지사항",
+                "title": "공지사항 및 이벤트",
                 "link": "/admin/page/notice"
             },
             {
-                "title": "속닥속닥",
-                "link": "/admin/page/free"
+                "title": "자주묻는질문",
+                "link": "/admin/page/faq"
             },
             {
-                "title": "성장일기",
-                "link": "/admin/page/growth"
-            },
-            {
-                "title": "고객센터",
+                "title": "1:1문의",
                 "link": "/admin/page/cscenter"
-            },
-            {
-                "title": "신고",
-                "link": "/admin/page/singo"
-            },
-        ]
-    },
-    {
-        "title": "예방접종",
-        "child": [
-            {
-                "title": "예방접종",
-                "link": "/admin/page/inoculation"
             },
         ]
     },

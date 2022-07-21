@@ -19,6 +19,7 @@ class Utils {
                                 name1 = ?,
                                 link = ? `;
                             db.query(sql, [req.session.mid, req.query.name1, CURRENT_URL], function(err, rows, fields) {
+                                console.log(err);
                                 self.getSaveMenu(req).then(function(data) {
                                     resolve(data);
                                 });
@@ -144,7 +145,7 @@ class Utils {
         var fcmArr = [];
         var resultObj = {};
         await new Promise(function(resolve, reject) {
-            var sql = "SELECT fcm FROM MEMB_tbl WHERE id = ? AND IS_push = 1 AND is_logout = 0"
+            var sql = "SELECT fcm FROM MEMB_tbl WHERE id = ? AND is_push = 1 AND is_logout = 0"
             db.query(sql, id, function(err, rows, fields) {
                 console.log(rows.length);
                 if (!err) {
@@ -229,30 +230,39 @@ class Utils {
 
     //null 값은 빈값으로 처리해준다!!
     nvl(arr) {
-        if (arr.length != null) {
-            for (var rows of arr) {
-                for (var i in rows) {
-                    if (rows[i] == null || rows[i] == 'null') {
-                        rows[i] = '';
+        try {
+            if (arr.length != null) {
+                for (var rows of arr) {
+                    for (var i in rows) {
+                        if (rows[i] == null || rows[i] == 'null') {
+                            rows[i] = '';
+                        }
+                    }
+                }
+            } else {
+                for (var i in arr) {
+                    if (arr[i] == null || arr[i] == 'null') {
+                        arr[i] = '';
                     }
                 }
             }
-        } else {
-            for (var i in arr) {
-                if (arr[i] == null || arr[i] == 'null') {
-                    arr[i] = '';
-                }
-            }
+            return arr;
+        } catch (e) {
+            return "";
         }
-        return arr;
+        
     }
 
     getAge(birth) {
-        var date = new Date();
-        var year = date.getFullYear();
-        var tmp = birth.split('-')[0];
-        var age = year - tmp;
-        return age;
+        try {
+            var date = new Date();
+            var year = date.getFullYear();
+            var tmp = birth.split('-')[0];
+            var age = year - tmp;
+            return age;
+        } catch (e) {}
+        return "";
+        
     }
 
     getAge2(birth, year) {
