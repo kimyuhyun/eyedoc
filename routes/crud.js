@@ -115,6 +115,7 @@ router.post('/list', userChecking, async function(req, res, next) {
     sql = "SELECT * FROM " + table + where + orderby + " LIMIT " + start + ", " + rows;
     console.log(sql);
     await db.query(sql, function(err, rows, fields) {
+        console.log(rows);
         var arr = new Object();
         arr['status'] = 'success';
         arr['total'] = records;
@@ -168,17 +169,9 @@ router.post('/write', userChecking, async function(req, res, next) {
         });
     } else {
         records.push(idx);
-        // sql = "UPDATE " + table + " SET " + sql + " modified = NOW() WHERE idx = ?";
         sql = `UPDATE ?? SET ${sql} modified = NOW() WHERE idx = ?`;
         await db.query(sql, records, function(err, rows, fields) {
             if (!err) {
-                // db.query("SELECT * FROM " + table + " WHERE idx = ?", idx, function(err, rows, fields) {
-                //     var arr = new Object();
-                //     arr['code'] = 2;
-                //     arr['msg'] = '수정 되었습니다.';
-                //     arr['record'] = rows[0];
-                //     res.send(arr);
-                // });
                 res.send(rows);
             } else {
                 res.send(err);

@@ -1,0 +1,83 @@
+<script src='https://code.jquery.com/jquery-3.5.0.min.js'></script>
+
+<div 
+    style="width: 500px; height: 500px; background-color: #000;" 
+    ondragenter="dragEnter(0, event)"
+    ondragleave="dragLeave(0, event)" 
+    ondragover="dragOver(event)" 
+    ondrop="drop(0, event)">
+</div>
+
+
+
+
+<script>
+function dragEnter(i, e) {
+    console.log(i, "드래그 요소가 들어왔을떄", e);
+    $("#filename"+i+"_IMG").addClass("bg-dark");
+}
+function dragLeave(i, e) {
+    console.log(i, "드래그 요소가 나갔을때");
+    $("#filename"+i+"_IMG").addClass("img-thumbnail");
+    $("#filename"+i+"_IMG").removeClass("bg-dark");
+}
+function dragOver(e) {
+    // console.log("draging");
+    e.stopPropagation();
+    e.preventDefault();
+}
+
+function drop(i, e) {
+    console.log("드래그한 항목을 떨어뜨렸을때", e);
+    e.preventDefault();
+
+    var urlLink = '';
+    try {
+        var imageUrl = e.dataTransfer.getData('text/html');
+        var rex = /src="?([^"\s]+)"?\s*/;
+        var url, res;
+        url = rex.exec(imageUrl);
+        urlLink = url[1];
+    } catch (e) {}
+    
+    if (urlLink) {
+        linkUpload(i, urlLink);
+    } else {
+        var file = e.dataTransfer.files[0];
+        fileUpload(i, file);
+    }
+}
+
+function linkUpload(i, urlLink) {
+    $.ajax({
+        type: 'POST',
+        url: '<%=process.env.HOST_NAME%>/image/link_upload',
+        data: { 'url_link': urlLink },
+        success: function(res) {
+            console.dir(res);
+        }, err: function(err) {
+            console.log(err);
+        }
+    });
+}
+
+function fileUpload(i, file) {
+    var formData = new FormData();
+    formData.append("upload_file", file, file.name);
+
+    $.ajax({
+        type: 'POST',
+        url: '<%=process.env.IMAGE_SERVER%>',
+        processData: false,
+        contentType: false,
+        data: formData,
+        dataType: "json",
+        success: function(res) {
+            console.dir(res);
+        }, err: function(err) {
+            console.log(err);
+        }
+    });
+}
+
+</script>

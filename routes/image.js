@@ -7,6 +7,10 @@ const uniqid = require('uniqid');
 const sharp = require('sharp');
 const cors = require('cors');
 
+const axios = require("axios");
+const FormData = require('form-data');
+const path = require('path');
+
 
 require('dotenv').config();
 
@@ -150,5 +154,37 @@ async function isFileUploaded(path) {
     });
 }
 
+router.post('/link_upload', cors(), async function(req, res, next) {
+    const urlLink = req.body.url_link;
+    console.log(urlLink);
+    var imageResponse = await axios({
+        url: urlLink,
+        method: 'GET',
+        responseType: 'arraybuffer'
+    });
+    const extension = path.extname(urlLink);
+    
+    //Create form data
+    const form = new FormData();
+    form.append('upload_file', imageResponse.data, {
+        contentType: `image/${extension}`,
+        name: `image`,
+        filename: `imageFileName.${extension}`
+    });
+    
+    //Submit form
+    const result = await axios({
+        url: `${process.env.HOST_NAME}/image/file_upload`, 
+        method: 'POST',
+        data: form, 
+        headers: { "Content-Type": `multipart/form-data; boundary=${form._boundary}` }
+    });
+    res.send(result.data);
+});
+
+router.get('/drag_and_drop', function(req, res, next) {
+    res.render('drag_and_drop.html');
+
+});
 
 module.exports = router;
