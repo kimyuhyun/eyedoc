@@ -366,7 +366,7 @@ router.get('/get_eye_predict/:idx', setLog, async function(req, res, next) {
 
     var r_per = 0, l_per = 0, age = utils.getAge(arr.birth);
 
-    if (age < 5) {
+    if (age < 5 || age > 18) {
         res.send({
             code: 0,
             msg: `만 5세 ~ 만 18세 사이의 데이터만 제공되고 있습니다.`,

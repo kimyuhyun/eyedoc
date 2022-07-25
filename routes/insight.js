@@ -49,7 +49,7 @@ router.get('/:memb_idx', setLog, async function(req, res, next) {
         var age = utils.getAge2(obj.birth, obj.wdate.split('-')[0]);
 
         //age 가 5세 미만은 넘어간다!
-        if (age < 5) {
+        if (age < 5 || age > 18) {
             continue;
         }
 
