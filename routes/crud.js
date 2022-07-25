@@ -113,9 +113,9 @@ router.post('/list', userChecking, async function(req, res, next) {
     }
 
     sql = "SELECT * FROM " + table + where + orderby + " LIMIT " + start + ", " + rows;
-    console.log(sql);
+    // console.log(sql);
     await db.query(sql, function(err, rows, fields) {
-        console.log(rows);
+        // console.log(rows);
         var arr = new Object();
         arr['status'] = 'success';
         arr['total'] = records;
@@ -135,6 +135,7 @@ router.get('/iterator', userChecking, async function(req, res, next) {
 router.post('/write', userChecking, async function(req, res, next) {
     var table = req.body.table;
     var idx = req.body.idx;
+    var boardId = req.body.board_id;
 
     delete req.body.recid;
     delete req.body.table;
@@ -177,7 +178,19 @@ router.post('/write', userChecking, async function(req, res, next) {
                 res.send(err);
             }
         });
+
+        //1:1문의면 푸시 날리기!!
+        if (boardId == 'cscenter') {
+            var sql = `SELECT id FROM BOARD_tbl WHERE idx = ?`;
+            var arr = await utils.queryResult(sql, [idx]);
+            var obj = arr[0];
+            utils.sendArticlePush(obj.id, '문의하신 글에 답변이 등록되었습니다,', idx, 'cscenter');
+            
+        }
     }
+
+    
+
     // console.log(sql, records);
 });
 

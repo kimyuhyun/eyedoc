@@ -4,6 +4,7 @@ const requestIp = require('request-ip');
 const axios = require('axios');
 const crypto = require('crypto');
 const utils = require('./Utils');
+const { log } = require('console');
 
 class Utils {
     setSaveMenu(req) {
@@ -81,7 +82,7 @@ class Utils {
     async sendPush(id, msg, menu_flag) {
         var fcmArr = [];
         await new Promise(function(resolve, reject) {
-            var sql = "SELECT fcm FROM MEMB_tbl WHERE id = ? AND IS_push = 1 AND is_logout = 0"
+            var sql = "SELECT fcm FROM MEMB_tbl WHERE id = ? AND is_push = 1"
             db.query(sql, id, function(err, rows, fields) {
                 console.log(rows.length);
                 if (!err) {
@@ -105,7 +106,7 @@ class Utils {
         fields['data'] = {};
 
         fields['registration_ids'] = fcmArr;
-        fields['notification']['title'] = 'Mybaby';
+        // fields['notification']['title'] = '아이닥';
         fields['notification']['body'] = msg;
         // fields['notification']['click_action'] = 'NOTI_CLICK'; //액티비티 다이렉트 호출
         fields['priority'] = 'high';
@@ -141,12 +142,13 @@ class Utils {
         return result;
     }
 
-    async sendArticlePush(id, msg, idx, writer, board_id) {
+    async sendArticlePush(pid, msg, idx, menu_flag) {
         var fcmArr = [];
         var resultObj = {};
         await new Promise(function(resolve, reject) {
-            var sql = "SELECT fcm FROM MEMB_tbl WHERE id = ? AND is_push = 1 AND is_logout = 0"
-            db.query(sql, id, function(err, rows, fields) {
+            var sql = "SELECT fcm FROM MEMB_tbl WHERE pid = ? AND is_push = 1 AND id != ''"
+            console.log(sql, pid);
+            db.query(sql, pid, function(err, rows, fields) {
                 console.log(rows.length);
                 if (!err) {
                     if (rows.length > 0) {
@@ -157,7 +159,7 @@ class Utils {
                     } else {
                         resolve({
                             code: 0,
-                            data: `${id} 의 IS_ALARM, IS_LOGOUT 값을 체크해보세요.`,
+                            data: `${pid} 의 IS_ALARM, IS_LOGOUT 값을 체크해보세요.`,
                         });
                     }
                 } else {
@@ -180,23 +182,14 @@ class Utils {
 
 
         var fields = {};
-        fields['notification'] = {};
-        fields['data'] = {};
+        fields.priority = 'high';
+        fields.registration_ids = fcmArr;
 
-        fields['registration_ids'] = fcmArr;
-        fields['notification']['title'] = '마이베이비';
-        fields['notification']['body'] = msg;
-
-        if (board_id == 'growth') {
-            fields['notification']['click_action'] = 'growth_detail'; //액티비티 다이렉트 호출
-        } else {
-            fields['notification']['click_action'] = 'article_detail'; //액티비티 다이렉트 호출
-        }
-
-        fields['priority'] = 'high';
-        fields['data']['idx'] = idx;
-        fields['data']['writer'] = writer;
-        fields['data']['board_id'] = board_id;
+        fields.data = {};
+        fields.data.title = 'Eyedoc';
+        fields.data.body = msg;
+        fields.data.idx = idx;
+        fields.data.menu_flag = menu_flag;
 
         var config = {
             method: 'post',
@@ -222,10 +215,9 @@ class Utils {
             }).catch(function (error) {
                 resolve(error);
             });
-        }).then(function(data) {
-            result = data;
+        }).then(function(res) {
+            console.log(res);
         });
-        return result;
     }
 
     //null 값은 빈값으로 처리해준다!!

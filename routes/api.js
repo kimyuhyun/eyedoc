@@ -393,6 +393,15 @@ router.get('/get_eye_predict/:idx', setLog, async function(req, res, next) {
     res.send(rtnObj);
 });
 
+router.get('/is_push/:pid', async function(req, res, next) {
+    const pid = req.params.pid;
+    var sql = `SELECT is_push FROM MEMB_tbl WHERE pid = ? AND id != '' `;
+    var params = [pid];
+    var arr = await utils.queryResult(sql, params);
+    var obj = arr[0];
+    res.send(obj);
+});
+
 router.get('/', setLog, async function(req, res, next) {
 
     // var sql = ``;
