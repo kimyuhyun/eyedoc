@@ -59,6 +59,8 @@ router.get('/:memb_idx', setLog, async function(req, res, next) {
             //가장 최근의 데이터로 그래프1의 퍼센트 구한다!
             graph1.left_per = rtnObj.l_per;
             graph1.right_per = rtnObj.r_per;
+            graph1.l_se = rtnObj.l_se;
+            graph1.r_se = rtnObj.r_se;
             graph1.age = age;
         }
 
