@@ -103,7 +103,7 @@ block content
                         $(".file_fields").html('');
                         for (let i = 0; i < fileLimitCount; i++) {
                             eval("var fileLink = w2ui.form.record.filename" + i);
-                            if (fileLink != '') {
+                            if (fileLink) {
                                 let html = createHtml(fileLink);
                                 $(".file_fields").append(html);
                             }
@@ -125,7 +125,7 @@ block content
                 { field: 'idx', caption: '번호', size: '50px', sortable: true, resizable: true, attr: 'align=center' },	//세팅 해줘야함
                 { field: 'filename0', caption: '썸네일', size: '50px', sortable: true, resizable: true, attr: 'align=center',	//세팅 해줘야함
                     render: function(record) {
-                        if (record.filename0 != '') {
+                        if (record.filename0) {
                             return '<img src="' + record.filename0 + '" style="width: 50px; height: 30px; margin: -3px 0 0 -3px;" />';
                         }
                     }
