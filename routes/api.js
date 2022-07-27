@@ -366,23 +366,35 @@ router.get('/get_eye_predict/:idx', setLog, async function(req, res, next) {
 
     var r_per = 0, l_per = 0, age = utils.getAge(arr.birth);
 
-    if (age < 5 || age > 18) {
+    if (age < 5) {
         res.send({
             code: 0,
-            msg: `만 5세 ~ 만 18세 사이의 데이터만 제공되고 있습니다.`,
+            msg: `만 5세 이상의 데이터만 제공되고 있습니다.`,
         });
         return;
     }
-    
-    for (var i = 5; i <= 18; i++) {
-        if (i >= age) {
+
+    if (age <= 18) {
+        for (var i = 5; i <= 18; i++) {
+            if (i >= age) {
+                r_per = 100 + eval(obj.r_per);
+                l_per = 100 + eval(obj.l_per);
+                // console.log(r_per,l_per, i);
+                rIleArr.push(percentIle(r_per, tmpArr[i]));
+                lIleArr.push(percentIle(l_per, tmpArr[i]));
+            }
+        }
+    } else {
+        for (var i = age; i <= (age + 10); i++) {
             r_per = 100 + eval(obj.r_per);
             l_per = 100 + eval(obj.l_per);
-            // console.log(r_per,l_per, i);
-            rIleArr.push(percentIle(r_per, tmpArr[i]));
-            lIleArr.push(percentIle(l_per, tmpArr[i]));
+            //18세 초과 이므로!! 무조건 18세로 픽스해서 데이터 계산한다!
+            rIleArr.push(percentIle(r_per, tmpArr[18]));
+            lIleArr.push(percentIle(l_per, tmpArr[18]));
         }
     }
+    
+    
     
     var rtnObj = {};
     rtnObj.code = 1;

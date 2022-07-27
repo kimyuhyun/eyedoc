@@ -49,7 +49,7 @@ router.get('/:memb_idx', setLog, async function(req, res, next) {
         var age = utils.getAge2(obj.birth, obj.wdate.split('-')[0]);
 
         //age 가 5세 미만은 넘어간다!
-        if (age < 5 || age > 18) {
+        if (age < 5) {
             continue;
         }
 
@@ -66,11 +66,18 @@ router.get('/:memb_idx', setLog, async function(req, res, next) {
 
         var r_per = 100 + eval(rtnObj.r_per);
         var l_per = 100 + eval(rtnObj.l_per);
+
+        var ll, rr;
+        if (age < 18) {
+            ll = percentIle(l_per, tmpArr[age]);
+            rr = percentIle(r_per, tmpArr[age]);
+        } else {
+            ll = percentIle(l_per, tmpArr[18]);
+            rr = percentIle(r_per, tmpArr[18]);
+        }
         
-        var ll = percentIle(l_per, tmpArr[age]);
-        var rr = percentIle(r_per, tmpArr[age]);
         
-        // console.log(age, ll, rr);
+        console.log(age, ll, rr);
         
         l_ile_arr.push({
             wdate: obj.wdate.substring(2),
@@ -98,20 +105,25 @@ router.get('/:memb_idx', setLog, async function(req, res, next) {
         var age = utils.getAge(arr[0].birth);
         res.send({
             code: 0,
-            msg: `만 5세 ~ 만 18세 사이의 데이터만 제공되고 있습니다.`,
+            msg: `만 5세 이상의 데이터만 제공되고 있습니다.`,
         });
         return;
     }
 
 
     //가장 마지막 나이를 가지고 평균을 구한다! - 평균또래 근시진행률
+    var age = graph1.age;
+    if (age > 18) {
+        age = 18;
+    }
+
     var sql = `SELECT AVG(rdata) as se FROM LAWDATA_tbl WHERE age = ?`;
-    var arr = await utils.queryResult(sql, [graph1.age]);
+    var arr = await utils.queryResult(sql, [age]);
     var se = arr[0].se;
     se = se.toFixed(2);
 
     var sql = `SELECT rdata FROM LAWDATA_tbl WHERE age = ? ORDER BY rdata ASC`;
-    var arr = await utils.queryResult(sql, [graph1.age]);
+    var arr = await utils.queryResult(sql, [age]);
     var rdataArr = [];
     for (obj of arr) {
         rdataArr.push(obj.rdata);
