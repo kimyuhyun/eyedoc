@@ -27,6 +27,7 @@ router.get('/:memb_idx', setLog, async function(req, res, next) {
             A.r_cyl,
             A.l_sph,
             A.l_cyl,
+            A.is_eyewash,
             A.wdate,
             (SELECT birth FROM MEMB_tbl WHERE idx = A.memb_idx) as birth
         FROM
@@ -81,12 +82,14 @@ router.get('/:memb_idx', setLog, async function(req, res, next) {
         
         l_ile_arr.push({
             wdate: obj.wdate.substring(2),
+            is_eyewash: obj.is_eyewash,
             age: age,
             val: ll,
         });
 
         r_ile_arr.push({
             wdate: obj.wdate.substring(2),
+            is_eyewash: obj.is_eyewash,
             age: age,
             val: rr,
         })
