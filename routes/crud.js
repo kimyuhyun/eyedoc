@@ -8,6 +8,7 @@ const db = require('../db');
 const utils = require('../Utils');
 const FormData = require('form-data');
 const axios = require('axios');
+const { log } = require('console');
 
 const upload = multer({
     storage: multer.diskStorage({
@@ -193,6 +194,48 @@ router.post('/write', userChecking, async function(req, res, next) {
 
     // console.log(sql, records);
 });
+
+router.post('/sight_test_detail_add', async function(req, res, next) {
+    var sightTesIdx = req.body.sight_test_idx;
+    var membIdx = req.body.memb_idx;
+    var eyeGbnList = req.body.eye_gbn;
+    var questionList = req.body.question;
+    var questionNumList = req.body.question_num;
+    var answerList = req.body.answer;
+    var answerVoiceUrlList = req.body.answer_voice_url;
+    var rightYnList = req.body.right_yn;
+
+    var rtnArr = [];
+    var sql = ``;
+    for (var i in eyeGbnList) {
+        sql = `
+            INSERT INTO SIGHT_TEST_DETAIL_tbl SET 
+                sight_test_idx = ?, 
+                memb_idx = ?, 
+                eye_gbn = ?,
+                question = ?,
+                question_num = ?,
+                answer = ?,
+                answer_voice_url = ?,
+                right_yn = ?
+        `;
+        var params = [
+            sightTesIdx, 
+            membIdx, 
+            eyeGbnList[i], 
+            questionList[i], 
+            questionNumList[i],
+            answerList[i],
+            answerVoiceUrlList[i],
+            rightYnList[i]
+        ];
+        rtnArr = await utils.queryResult(sql, params)
+        console.log(rtnArr);
+    }
+    res.send(true);
+});
+
+
 
 router.get('/view', userChecking, async function(req, res, next) {
     console.log('/view', req.body);
