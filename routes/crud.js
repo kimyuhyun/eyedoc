@@ -195,45 +195,6 @@ router.post('/write', userChecking, async function(req, res, next) {
     // console.log(sql, records);
 });
 
-router.post('/sight_test_detail_add', async function(req, res, next) {
-    var sightTesIdx = req.body.sight_test_idx;
-    var membIdx = req.body.memb_idx;
-    var eyeGbnList = req.body.eye_gbn;
-    var questionList = req.body.question;
-    var questionNumList = req.body.question_num;
-    var answerList = req.body.answer;
-    var answerVoiceUrlList = req.body.answer_voice_url;
-    var rightYnList = req.body.right_yn;
-
-    var rtnArr = [];
-    var sql = ``;
-    for (var i in eyeGbnList) {
-        sql = `
-            INSERT INTO SIGHT_TEST_DETAIL_tbl SET 
-                sight_test_idx = ?, 
-                memb_idx = ?, 
-                eye_gbn = ?,
-                question = ?,
-                question_num = ?,
-                answer = ?,
-                answer_voice_url = ?,
-                right_yn = ?
-        `;
-        var params = [
-            sightTesIdx, 
-            membIdx, 
-            eyeGbnList[i], 
-            questionList[i], 
-            questionNumList[i],
-            answerList[i],
-            answerVoiceUrlList[i],
-            rightYnList[i]
-        ];
-        rtnArr = await utils.queryResult(sql, params)
-        console.log(rtnArr);
-    }
-    res.send(true);
-});
 
 
 
@@ -359,5 +320,10 @@ router.post('/file_delete', userChecking, async function(req, res, next) {
     });
 });
 
+router.post('/post_test', async function(req, res, next) {
+    console.log(req.body);
+
+    res.send(req.body);
+});
 
 module.exports = router;

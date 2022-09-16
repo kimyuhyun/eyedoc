@@ -27,6 +27,7 @@ const termsRouter = require('./routes/terms');
 
 const insightRouter = require('./routes/insight');
 const authRouter = require('./routes/auth');
+const sightTestRouter = require('./routes/sight_test');
 
 const app = express();
 
@@ -77,8 +78,10 @@ app.use('/image', imageRouter);
 app.use('/terms', termsRouter);
 
 app.use('/insight', insightRouter);
-
 app.use('/auth', authRouter);
+app.use('/sight_test', sightTestRouter);
+
+
 
 
 // catch 404 and forward to error handler
