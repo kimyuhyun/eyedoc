@@ -229,7 +229,33 @@ router.get('/get_sight_test_idx/:token', setLog, async function(req, res, next) 
     var params = [token];
     var rtnArr = await utils.queryResult(sql, params);
     var row = rtnArr[0];
-    res.send(row.sight_test_idx);
+    if (row) {
+        res.send(row.sight_test_idx);
+    } else {
+        res.send(``);
+    }
+    
+});
+
+router.post('/delete_sight_test', setLog, async function(req, res, next) {
+    const idx = req.body.idx;
+    
+    var sql = `DELETE FROM SIGHT_TEST_DETAIL_tbl WHERE sight_test_idx = ?`;
+    var params = [idx];
+    await utils.queryResult(sql, params);
+    
+    sql = `DELETE FROM SIGHT_TEST_tbl WHERE idx = ?`;
+    params = [idx];
+    await utils.queryResult(sql, params);
+
+    sql = `DELETE FROM SIGHT_TEST_SHARE_tbl WHERE sight_test_idx = ?`;
+    params = [idx];
+    await utils.queryResult(sql, params);
+
+    res.send({
+        code: 1,
+        msg: '삭제 되었습니다.'
+     });
 });
 
 router.get('/', setLog, async function(req, res, next) {
