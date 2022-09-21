@@ -6,7 +6,9 @@ const utils = require('../Utils');
 const moment = require('moment');
 const requestIp = require('request-ip');
 const commaNumber = require('comma-number');
-var shortHash = require("shorthash");
+const shortHash = require("shorthash");
+const { log } = require('console');
+
 
 async function setLog(req, res, next) {
     const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
@@ -206,8 +208,9 @@ router.get('/get_sight_test_insight/:memb_idx', setLog, async function(req, res,
 
 router.get('/get_share_link/:sight_test_idx', setLog, async function(req, res, next) {
     const idx = req.params.sight_test_idx;
-
-    const token = shortHash.unique(idx);
+   
+    //숏해쉬가 너무 짧아! 중복이 생긴다!! 그래서 현재시간과 함께 암호화 한다!
+    const token = shortHash.unique(`${new Date()}${idx}`);
 
     var sql = `SELECT count(*) as cnt FROM SIGHT_TEST_SHARE_tbl WHERE token = ?`;
     var params = [token];
