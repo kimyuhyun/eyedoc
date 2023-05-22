@@ -71,7 +71,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(requestIp.mw());
 app.use(express.json());
-app.use(express.static(path.join(__dirname, "public")));
+app.use(express.static(path.join(__dirname, "./public")));
 app.use(express.static(path.join(__dirname, "./client/build")));
 
 app.use("/", require("./routes/index"));

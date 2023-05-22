@@ -45,5 +45,5 @@
         ]
     },
     "proxy": "http://localhost:3000",
-    "homepage": "https://dev.eyedocapi.com"
+    "homepage": "."
 }
