@@ -1,6 +1,6 @@
 {
-    "name": "MVP",
-    "version": "3.0.0",
+    "name": "eyedoc",
+    "version": "3.1.0",
     "private": true,
     "engines": {
         "npm": "8.15.0",
