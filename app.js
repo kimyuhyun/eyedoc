@@ -50,10 +50,9 @@ app.use(
     helmet({
         contentSecurityPolicy: false,
         crossOriginEmbedderPolicy: false,
-        crossOriginOpenerPolicy: false,
-        crossOriginResourcePolicy: false
     })
 );
+app.use(helmet.crossOriginResourcePolicy()); //Cross-Origin-Resource-Policy 헤더를 설정
 app.use(helmet.dnsPrefetchControl()); //DNS 프리 페치를 비활성화
 app.use(helmet.expectCt()); //Expect-CT 헤더를 설정하여 SSL 인증서 오발급을 예방
 app.use(helmet.frameguard()); //X-Frame-Options 헤더를 설정하여 clickjacking에 대한 보호를 제공
