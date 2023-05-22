@@ -65,7 +65,7 @@ app.use(helmet.referrerPolicy()); //참조 referrer 헤더를 숨김
 app.use(helmet.xssFilter()); // XSS 공격 방지
 
 app.use(logger("dev"));
-app.use(cors());
+// app.use(cors());
 app.use(cookieParser());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
