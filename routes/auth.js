@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const fs = require('fs');
-const utils = require('../Utils');
+const utils = require('../common/utils');
 
 async function setLog(req, res, next) {
     const ip = req.headers["x-forwarded-for"] || req.connection.remoteAddress;

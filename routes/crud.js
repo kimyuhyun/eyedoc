@@ -1,329 +1,140 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const bodyParser = require('body-parser');
-const fs = require('fs')
-const multer = require('multer');
-const uniqid = require('uniqid');
-const db = require('../db');
-const utils = require('../Utils');
-const FormData = require('form-data');
-const axios = require('axios');
-const { log } = require('console');
+const db = require("../common/db");
+const utils = require("../common/utils");
+const middleware = require("../common/middleware");
 
-const upload = multer({
-    storage: multer.diskStorage({
-        destination: function(req, file, cb) {
-            var date = new Date();
-            var month = eval(date.getMonth() + 1);
-            if (eval(date.getMonth() + 1) < 10) {
-                month = "0" + eval(date.getMonth() + 1);
-            }
-            var dir = 'data/' + date.getFullYear() + "" + month;
-            if (!fs.existsSync(dir)) {
-                fs.mkdirSync(dir);
-            }
-            cb(null, dir);
-        },
-        filename: function(req, file, cb) {
-            var tmp = file.originalname.split('.');
-            var mimeType = tmp[tmp.length - 1];
-            if ('php|phtm|htm|cgi|pl|exe|jsp|asp|inc'.includes(mimeType)) {
-                mimeType = mimeType + "x";
-            }
-            cb(null, uniqid(file.filename) + '.' + mimeType);
-        }
-    })
+router.get("/read", middleware.checkToken, async function (req, res, next) {
+    const { idx, table } = req.query;
+
+    var row = {};
+
+    if (idx) {
+        const sql = `SELECT * FROM ?? WHERE idx = ?`;
+        const arr = await utils.queryResult(sql, [table, idx]);
+        row = arr[0];
+    }
+    res.send(row);
 });
 
-
-function userChecking(req, res, next) {
-    //여기서 토큰 체크!
-
-    //
-    next();
-}
-
-
-router.post('/list', userChecking, async function(req, res, next) {
-    var table = req.query.table;
-    var board_id = req.query.board_id;
-    var level1 = req.query.level1;
-    var step = req.query.step;
-    var parent_idx = req.query.parent_idx;
-    var params;
-
-    if (req.body.request != null) {
-        params = JSON.parse(req.body.request);
-    } else {
-        params.offset = 0;
-        params.limit = 10;
-    }
-
-    // console.log(params);
-
-    var records = 0;
-    var sql = "";
-    var where = " WHERE 1=1 ";
-    var orderby = "";
-    var start = params.offset == null ? 0 : params.offset;
-    var rows = params.limit;
-
-    if (board_id != null) {
-        where += " AND board_id = '" + board_id + "'";
-    }
-
-    if (step != null) {
-        where += " AND step = '" + step + "'";
-    }
-
-    if (parent_idx != null) {
-        where += " AND parent_idx = '" + parent_idx + "'";
-    }
-
-    if (level1 != null) {
-        where += " AND level1 = " + level1;
-    }
-
-    if (params.search != null) {
-        var tmp = "";
-        for (var i in params.search) {
-            if (i > 0) {
-                tmp += " OR ";
-            }
-            tmp += params.search[i].field + " LIKE '%" + params.search[i].value + "%'";
-        }
-        where += " AND (" + tmp + ")";
-    }
-
-
-    var sql = "SELECT COUNT(*) as CNT FROM " + table + where;
-    await db.query(sql, function(err, rows, fields) {
-        records = rows[0].CNT;
-    });
-
-
-    if (params.sort != null) {
-        orderby = ` ORDER BY `;
-        var tmp = '';
-        for (obj of params.sort) {
-            tmp += `, ${obj.field} ${obj.direction} `;
-        }
-        orderby += tmp.substring(1);
-    } else {
-        orderby = " ORDER BY idx DESC ";
-    }
-
-    sql = "SELECT * FROM " + table + where + orderby + " LIMIT " + start + ", " + rows;
-    // console.log(sql);
-    await db.query(sql, function(err, rows, fields) {
-        // console.log(rows);
-        var arr = new Object();
-        arr['status'] = 'success';
-        arr['total'] = records;
-        arr['records'] = rows;
-        res.send(arr);
-    });
-});
-
-router.get('/iterator', userChecking, async function(req, res, next) {
-    var table = req.query.table;
-    var sql = "SELECT * FROM " + table + " ORDER BY idx DESC";
-    db.query(sql, table, function(err, rows, fields) {
-        res.send(rows);
-    });
-});
-
-router.post('/write', userChecking, async function(req, res, next) {
-    var table = req.body.table;
-    var idx = req.body.idx;
-    var boardId = req.body.board_id;
-
-    delete req.body.recid;
-    delete req.body.table;
-    delete req.body.idx;
-    delete req.body.created;
-    delete req.body.modified;
-
-    var sql = ""
-    var records = [];
-
-    records.push(table);
-
-    for (key in req.body) {
-        if (req.body[key] != 'null') {
-            if (key == 'pass1') {
-                sql += key + '= PASSWORD(?), ';
-            } else {
-                sql += key + '= ?, ';
-            }
-            records.push(req.body[key]);
-        }
-    }
-
-    if (idx == null) {
-        sql = `INSERT INTO ?? SET ${sql} created = NOW(), modified = NOW()`;
-        await db.query(sql, records, function(err, rows, fields) {
-            if (!err) {
-                res.send(rows);
-            } else {
-                res.send(err);
-            }
-        });
-    } else {
-        records.push(idx);
-        sql = `UPDATE ?? SET ${sql} modified = NOW() WHERE idx = ?`;
-        await db.query(sql, records, function(err, rows, fields) {
-            if (!err) {
-                res.send(rows);
-            } else {
-                res.send(err);
-            }
-        });
-
-        //1:1문의면 푸시 날리기!!
-        if (boardId == 'cscenter') {
-            var sql = `SELECT id FROM BOARD_tbl WHERE idx = ?`;
-            var arr = await utils.queryResult(sql, [idx]);
-            var obj = arr[0];
-            utils.sendArticlePush(obj.id, '문의하신 글에 답변이 등록되었습니다,', idx, 'cscenter');
-            
-        }
-    }
-
-    
-
-    // console.log(sql, records);
-});
-
-
-
-
-router.get('/view', userChecking, async function(req, res, next) {
-    console.log('/view', req.body);
-
-    var arr = new Object();
-    arr['status'] = 'success';
-    res.send(arr);
-});
-
-router.post('/delete', userChecking, async function(req, res, next) {
+router.post("/write", middleware.checkToken, async function (req, res, next) {
     const table = req.body.table;
     const idx = req.body.idx;
-    const sql = "DELETE FROM " + table + " WHERE idx = ?";
-    db.query(sql, idx);
 
-    res.send({
-        code: 1,
-        msg: '삭제 되었습니다.'
-     });
-});
+    delete req.body.table;
+    delete req.body.idx;
 
-router.post('/remove', userChecking, async function(req, res, next) {
-    var table = req.query.table;
-    var params = JSON.parse(req.body.request);
-    console.log(params);
-    var sql = ``;
-    for (idx of params.selected) {
-        sql = `DELETE FROM ${table} WHERE idx = ${idx}`;
-        db.query(sql);
-        console.log(sql);
-    }
-    var arr = new Object();
-    arr['code'] = 1;
-    res.send(arr);
-});
+    var isDateColnumn = true;
 
-router.post('/reply_delete', userChecking, async function(req, res, next) {
-    var table = req.query.table;
-    var params = JSON.parse(req.body.request);
-    console.log(params);
-    var sql = ``;
-    for (idx of params.selected) {
-        sql = `UPDATE ${table} SET id='admin', name1='관리자', memo='삭제된 댓글 입니다.', filename0='' WHERE idx = ${idx}`;
-        db.query(sql);
-    }
-    var arr = new Object();
-    arr['code'] = 1;
-    res.send(arr);
-});
-
-router.post('/copy', userChecking, async function(req, res, next) {
-    const table = req.query.table;
-    var sql = '';
-    var arr = [];
-
-    if (!Array.isArray(req.body.idx)) {
-        arr.push(req.body.idx);
-    } else {
-        arr = req.body.idx;
+    //날짜 컬럼이 있는지 확인!
+    var sql = `SHOW COLUMNS FROM ?? LIKE 'created'`;
+    var arr = await utils.queryResult(sql, [table]);
+    if (!arr[0]) {
+        isDateColnumn = false;
     }
 
-    for (idx of arr) {
-        await new Promise(function(resolve, reject) {
-            sql = 'SELECT * FROM ' + table + ' WHERE idx = ?';
-            db.query(sql, idx, function(err, rows, fields) {
-                if (!err) {
-                    delete rows[0].idx;
-                    delete rows[0].modified;
-                    delete rows[0].created;
+    const records = [];
+    records.push(table);
 
-                    let records = [];
-                    sql = 'INSERT INTO ' + table + ' SET ';
-                    for (key in rows[0]) {
-                        if (rows[0][key] != 'null') {
-                            if (key == 'pass1') {
-                                sql += key + '=PASSWORD(?),';
-                            } else {
-                                sql += key + '=?,';
-                            }
-                            records.push(rows[0][key]);
-                        }
-                    }
-                    sql += 'created=NOW(),modified=NOW()';
-
-                    db.query(sql, records, function(err, rows, fields) {
-                        if (!err) {
-                            resolve();
-                        } else {
-                            console.log(err);
-                        }
-                    });
-                } else {
-                    console.log(err);
+    sql = "";
+    for (key in req.body) {
+        if (req.body[key] != "null") {
+            if (key == "pass1") {
+                if (req.body[key]) {
+                    sql += key + "= PASSWORD(?), ";
+                    records.push(req.body[key]);
                 }
-            });
-        }).then();
-    }
-
-    res.send({
-        code: 1,
-    });
-});
-
-
-router.post('/file_delete', userChecking, async function(req, res, next) {
-    console.log(req.body.filename);
-    await fs.exists(req.body.filename, function(exists) {
-        console.log(exists);
-        var arr = new Object();
-        if (exists) {
-            fs.unlink(req.body.filename, function(err) {
-                if (!err) {
-                    arr['code'] = 1;
-                    res.send(arr);
-                }
-            });
-        } else {
-            arr['code'] = 0;
-            res.send(arr);
+            } else {
+                sql += key + "= ?, ";
+                records.push(req.body[key]);
+            }
         }
+    }
+
+    if (idx) {
+        records.push(idx);
+        if (isDateColnumn) {
+            sql = `UPDATE ?? SET ${sql} modified = NOW() WHERE idx = ?`;
+        } else {
+            sql = `UPDATE ?? SET ${sql.slice(0, -2)}  WHERE idx = ?`;
+        }
+    } else {
+        if (isDateColnumn) {
+            sql = `INSERT INTO ?? SET ${sql} created = NOW(), modified = NOW()`;
+        } else {
+            sql = `INSERT INTO ?? SET ${sql.slice(0, -2)}`;
+        }
+    }
+    const result = await utils.queryResult(sql, records);
+    console.log(result);
+    res.send(result);
+});
+
+router.post("/delete", middleware.checkToken, async function (req, res, next) {
+    const table = req.body.table;
+    const idxArr = req.body.idx;
+
+    console.log(idxArr.length);
+
+    if (Array.isArray(idxArr)) {
+        for (idx of idxArr) {
+            await utils.queryResult(`DELETE FROM ?? WHERE idx = ?`, [table, idx]);
+        }
+    } else {
+        await utils.queryResult(`DELETE FROM ?? WHERE idx = ?`, [table, idxArr]);
+    }
+
+    res.send({
+        code: 1,
+        msg: "삭제 되었습니다.",
     });
 });
 
-router.post('/post_test', async function(req, res, next) {
-    console.log(req.body);
+router.post("/update_where", middleware.checkToken, async function (req, res, next) {
+    const table = req.body.table;
+    const where = req.body.where;
+    const set = req.body.set;
 
-    res.send(req.body);
+    //인젝션 검사!
+    for (key in req.body) {
+        if (
+            req.body[key].toLowerCase().includes("insert") ||
+            req.body[key].toLowerCase().includes("delete") ||
+            req.body[key].toLowerCase().includes("update") ||
+            req.body[key].toLowerCase().includes("select")
+        ) {
+            res.status(500).send("error");
+            return;
+        }
+    }
+    //
+
+    const sql = `UPDATE ?? SET ${set} WHERE ${where}`;
+    const arr = await utils.queryResult(sql, [table]);
+    res.status(200).send(arr);
+});
+
+router.post("/delete_where", middleware.checkToken, async function (req, res, next) {
+    const table = req.body.table;
+    const where = req.body.where;
+
+    //인젝션 검사!
+    for (key in req.body) {
+        if (
+            req.body[key].toLowerCase().includes("insert") ||
+            req.body[key].toLowerCase().includes("delete") ||
+            req.body[key].toLowerCase().includes("update") ||
+            req.body[key].toLowerCase().includes("select")
+        ) {
+            res.status(500).send("error");
+            return;
+        }
+    }
+    //
+
+    const sql = `DELETE FROM ?? WHERE ${where}`;
+    const arr = await utils.queryResult(sql, [table]);
+    res.status(200).send(arr);
 });
 
 module.exports = router;

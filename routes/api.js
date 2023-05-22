@@ -1,141 +1,74 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const bodyParser = require('body-parser');
-const fs = require('fs');
-const db = require('../db');
-const utils = require('../Utils');
-const moment = require('moment');
-const percentIle = require('percentile');
-// const percentIle = require('stats-percentile');
+const bodyParser = require("body-parser");
+const fs = require("fs");
+const db = require("../common/db");
+const utils = require("../common/utils");
+const moment = require("moment");
+const percentIle = require("percentile");
+const middleware = require("../common/middleware");
+const requestIp = require("request-ip");
 
-async function setLog(req, res, next) {
-    const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-    var rows;
-    await new Promise(function(resolve, reject) {
-        var sql = `SELECT visit FROM ANALYZER_tbl WHERE ip = ? ORDER BY idx DESC LIMIT 0, 1`;
-        db.query(sql, ip, function(err, rows, fields) {
-            if (!err) {
-                resolve(rows);
-            }
-        });
-    }).then(function(data){
-        rows = data;
+router.get("/", async function (req, res, next) {
+    res.send({
+        title: "Eyedoc api",
+        ip: requestIp.getClientIp(req),
+        mode: process.env.NODE_ENV,
+        session: req.session,
     });
+});
 
-    await new Promise(function(resolve, reject) {
-        var sql = `INSERT INTO ANALYZER_tbl SET ip = ?, agent = ?, visit = ?, created = NOW()`;
-        if (rows.length > 0) {
-            var cnt = rows[0].visit + 1;
-            db.query(sql, [ip, req.headers['user-agent'], cnt], function(err, rows, fields) {
-                resolve(cnt);
-            });
-        } else {
-            db.query(sql, [ip, req.headers['user-agent'], 1], function(err, rows, fields) {
-                resolve(1);
-            });
-        }
-    }).then(function(data) {
-        console.log(data);
-    });
-
-    //현재 접속자 파일 생성
-    var memo = new Date().getTime() + "|S|" + req.baseUrl + req.path;
-    fs.writeFile('./liveuser/'+ip, memo, function(err) {
-        console.log(memo);
-    });
-    //
-    next();
-}
-
-router.get('/is_member/:id', setLog, async function(req, res, next) {
+router.get("/is_member/:id", middleware.checkToken, async function (req, res, next) {
     const id = req.params.id;
     var arr = {};
 
     var cnt = 0;
-    await new Promise(function(resolve, reject) {
-        const sql = `SELECT COUNT(*) as cnt FROM MEMB_tbl WHERE id = ?`;
-        db.query(sql, id, function(err, rows, fields) {
-            if (!err) {
-                resolve(rows[0]);
-            } else {
-                console.log(err);
-                res.send(err);
-                return;
-            }
-        });
-    }).then(function(data) {
-        cnt = data.cnt;
-    });
+    var sql = `SELECT COUNT(*) as cnt FROM MEMB_tbl WHERE id = ?`;
+    var arr = await utils.queryResult(sql, [id]);
+    var obj = arr[0];
+    cnt = obj.cnt ?? 0;
 
     if (cnt > 0) {
-        await new Promise(function(resolve, reject) {
-            const sql = `SELECT idx, pid, id, name1, birth, gender, email, filename0 FROM MEMB_tbl WHERE id = ?`;
-            db.query(sql, id, function(err, rows, fields) {
-                console.log(rows);
-                if (!err) {
-                    resolve(rows[0]);
-                } else {
-                    console.log(err);
-                    res.send(err);
-                    return;
-                }
-            });
-        }).then(function(data) {
-            if (data) {
-                arr = utils.nvl(data);
-                arr.code = 1;
-            }
-        });
+        sql = `SELECT idx, pid, id, name1, birth, gender, email, filename0 FROM MEMB_tbl WHERE id = ?`;
+        arr = await utils.queryResult(sql, [id]);
+        obj = arr[0];
+        obj = utils.nvl(obj);
 
-        await new Promise(function(resolve, reject) {
-            const sql = `SELECT idx, name1, birth, filename0 FROM MEMB_tbl WHERE pid = ? AND is_selected = 1`;
-            db.query(sql, [id, id], function(err, rows, fields) {
-                console.log(rows);
-                if (!err) {
-                    resolve(rows[0]);
-                } else {
-                    console.log(err);
-                    res.send(err);
-                    return;
-                }
-            });
-        }).then(function(data) {
-            if (data) {
-                arr.selected_idx = data.idx;
-                arr.selected_name1 = data.name1;
-                arr.selected_birth = data.birth;
-                arr.selected_filename0 = data.filename0;
-            } else {
-                arr.selected_idx = arr.idx;
-                arr.selected_name1 = arr.name1;
-                arr.selected_birth = arr.birth;
-                arr.selected_filename0 = arr.filename0;
-            }
-            arr.code = 1;
-        });
+        sql = `SELECT idx, name1, birth, filename0 FROM MEMB_tbl WHERE pid = ? AND is_selected = 1`;
+        arr = await utils.queryResult(sql, [id]);
+        var obj2 = arr[0];
 
+        if (obj2) {
+            obj.selected_idx = obj2.idx;
+            obj.selected_name1 = obj2.name1;
+            obj.selected_birth = obj2.birth;
+            obj.selected_filename0 = obj2.filename0;
+        } else {
+            obj.selected_idx = obj.idx;
+            obj.selected_name1 = obj.name1;
+            obj.selected_birth = obj.birth;
+            obj.selected_filename0 = obj.filename0;
+        }
+        obj.code = 1;
     } else {
-        arr.code = 0;
+        obj.code = 0;
     }
 
-    res.send(arr);
+    res.send(obj);
 
     //마지막 접속일 업데이트!
-    if (arr.code == 1) {
+    if (obj.code == 1) {
         db.query(`UPDATE MEMB_tbl SET modified = NOW() WHERE id = ?`, id);
     }
     //
-
-
-
 });
 
-router.post('/register', setLog, async function(req, res, next) {
+router.post("/register", middleware.checkToken, async function (req, res, next) {
     const { id, name1, birth, gender, email } = req.body;
 
-    await new Promise(function(resolve, reject) {
+    await new Promise(function (resolve, reject) {
         const sql = `INSERT INTO MEMB_tbl SET pid = ?, id = ?, name1 =?, birth = ?, gender = ?, email = ?, is_selected = 1, created = NOW(), modified = NOW()`;
-        db.query(sql, [id, id, name1, birth, gender, email], function(err, rows, fields) {
+        db.query(sql, [id, id, name1, birth, gender, email], function (err, rows, fields) {
             if (!err) {
                 resolve(rows);
             } else {
@@ -144,15 +77,14 @@ router.post('/register', setLog, async function(req, res, next) {
                 return;
             }
         });
-    }).then(function(data) {
+    }).then(function (data) {
         res.send({
             code: 1,
         });
     });
 });
 
-
-router.get('/get_eyes_data_list/:memb_idx', async function(req, res, next) {
+router.get("/get_eyes_data_list/:memb_idx", middleware.checkToken, async function (req, res, next) {
     const memb_idx = req.params.memb_idx;
     const limit = req.query.limit;
     var page = req.query.page;
@@ -167,7 +99,7 @@ router.get('/get_eyes_data_list/:memb_idx', async function(req, res, next) {
     var ageArr = [];
     var eyeWashArr = [];
 
-    await new Promise(function(resolve, reject) {
+    await new Promise(function (resolve, reject) {
         var sql = `
             SELECT
             idx,
@@ -187,9 +119,8 @@ router.get('/get_eyes_data_list/:memb_idx', async function(req, res, next) {
             ORDER BY wdate DESC, created DESC 
             LIMIT ${page}, ${limit} 
         `;
-        
 
-        db.query(sql, memb_idx, function(err, rows, fields) {
+        db.query(sql, memb_idx, function (err, rows, fields) {
             if (!err) {
                 resolve(rows);
             } else {
@@ -198,17 +129,18 @@ router.get('/get_eyes_data_list/:memb_idx', async function(req, res, next) {
                 return;
             }
         });
-    }).then(function(data) {
+    }).then(function (data) {
         data = utils.nvl(data);
         var r_se = 0;
         var l_se = 0;
 
-        var tmp = '', oldAge = '';
+        var tmp = "",
+            oldAge = "";
 
         arr.list = [];
 
-        for (obj of data) {
-            tmp = utils.getAge2(obj.birth, obj.wdate.split('-')[0]);
+        for (var obj of data) {
+            tmp = utils.getAge2(obj.birth, obj.wdate.split("-")[0]);
             if (tmp != oldAge) {
                 oldAge = tmp;
                 obj.age = tmp;
@@ -234,7 +166,6 @@ router.get('/get_eyes_data_list/:memb_idx', async function(req, res, next) {
         }
     });
 
-
     var tmpArr = await utils.getLawData();
     var tmpAge = 0;
     var ileObj = {};
@@ -243,7 +174,7 @@ router.get('/get_eyes_data_list/:memb_idx', async function(req, res, next) {
 
     //나이순으로 정렬!!
     ageArr.sort(function (a, b) {
-    	return a.age < b.age ? -1 : a.age > b.age ? 1 : 0;
+        return a.age < b.age ? -1 : a.age > b.age ? 1 : 0;
     });
 
     eyeWashArr.sort();
@@ -258,38 +189,37 @@ router.get('/get_eyes_data_list/:memb_idx', async function(req, res, next) {
             tmpAge = obj.age;
         }
 
-
-
         if (row.r_per != 0 && row.l_per != 0) {
-            var r_per = 0, l_per = 0;
-             r_per = 100 + eval(row.r_per);
-             l_per = 100 + eval(row.l_per);
-             rIleArr.push({
-                 age: tmpAge,
-                 val: percentIle(r_per, tmpArr[tmpAge]),
-             });
+            var r_per = 0,
+                l_per = 0;
+            r_per = 100 + eval(row.r_per);
+            l_per = 100 + eval(row.l_per);
+            rIleArr.push({
+                age: tmpAge,
+                val: percentIle(r_per, tmpArr[tmpAge]),
+            });
 
-             lIleArr.push({
-                 age: tmpAge,
-                 val: percentIle(l_per, tmpArr[tmpAge]),
-             });
-             // lIleObj.
-             // rIleArr.push();
-             // lIleArr.push(percentIle(l_per, tmpArr[tmpAge]));
+            lIleArr.push({
+                age: tmpAge,
+                val: percentIle(l_per, tmpArr[tmpAge]),
+            });
+            // lIleObj.
+            // rIleArr.push();
+            // lIleArr.push(percentIle(l_per, tmpArr[tmpAge]));
         }
     }
 
     arr.r_ile_arr = rIleArr;
     arr.l_ile_arr = lIleArr;
-    arr.eye_wash_arr= eyeWashArr;
+    arr.eye_wash_arr = eyeWashArr;
 
     res.send(arr);
 });
 
-router.get('/get_eyes_data_datail/:idx', async function(req, res, next) {
+router.get("/get_eyes_data_datail/:idx", middleware.checkToken, async function (req, res, next) {
     const idx = req.params.idx;
     var arr = [];
-    await new Promise(function(resolve, reject) {
+    await new Promise(function (resolve, reject) {
         const sql = `
             SELECT
             A.*,
@@ -298,7 +228,7 @@ router.get('/get_eyes_data_datail/:idx', async function(req, res, next) {
             EYES_DATA_tbl as A
             WHERE A.idx = ?
         `;
-        db.query(sql, idx, function(err, rows, fields) {
+        db.query(sql, idx, function (err, rows, fields) {
             if (!err) {
                 resolve(rows[0]);
             } else {
@@ -307,7 +237,7 @@ router.get('/get_eyes_data_datail/:idx', async function(req, res, next) {
                 return;
             }
         });
-    }).then(function(data) {
+    }).then(function (data) {
         arr = utils.nvl(data);
     });
 
@@ -317,15 +247,16 @@ router.get('/get_eyes_data_datail/:idx', async function(req, res, next) {
     var lIleArr = [];
 
     // if (obj.r_per != 0 && obj.l_per != 0) {
-    var r_per = 0, l_per = 0;
-    for (var i=5;i<=18;i++) {
+    var r_per = 0,
+        l_per = 0;
+    for (var i = 5; i <= 18; i++) {
         // var obj = await utils.getEyesPer(i, arr.r_sph, arr.r_cyl, arr.l_sph, arr.l_cyl);
         // console.log(obj);
-         r_per = 100 + eval(obj.r_per);
-         l_per = 100 + eval(obj.l_per);
-console.log(r_per,l_per);
-         rIleArr.push(percentIle(r_per, tmpArr[i]));
-         lIleArr.push(percentIle(l_per, tmpArr[i]));
+        r_per = 100 + eval(obj.r_per);
+        l_per = 100 + eval(obj.l_per);
+        console.log(r_per, l_per);
+        rIleArr.push(percentIle(r_per, tmpArr[i]));
+        lIleArr.push(percentIle(l_per, tmpArr[i]));
     }
     // }
 
@@ -338,10 +269,9 @@ console.log(r_per,l_per);
     arr.l_per = obj.l_per;
 
     res.send(arr);
-
 });
 
-router.get('/get_eye_predict/:idx', setLog, async function(req, res, next) {
+router.get("/get_eye_predict/:idx", middleware.checkToken, async function (req, res, next) {
     const idx = req.params.idx;
 
     var sql = `
@@ -364,7 +294,9 @@ router.get('/get_eye_predict/:idx', setLog, async function(req, res, next) {
     var rIleArr = [];
     var lIleArr = [];
 
-    var r_per = 0, l_per = 0, age = utils.getAge(arr.birth);
+    var r_per = 0,
+        l_per = 0,
+        age = utils.getAge(arr.birth);
 
     if (age < 5) {
         res.send({
@@ -385,7 +317,7 @@ router.get('/get_eye_predict/:idx', setLog, async function(req, res, next) {
             }
         }
     } else {
-        for (var i = age; i <= (age + 10); i++) {
+        for (var i = age; i <= age + 10; i++) {
             r_per = 100 + eval(obj.r_per);
             l_per = 100 + eval(obj.l_per);
             //18세 초과 이므로!! 무조건 18세로 픽스해서 데이터 계산한다!
@@ -393,9 +325,7 @@ router.get('/get_eye_predict/:idx', setLog, async function(req, res, next) {
             lIleArr.push(percentIle(l_per, tmpArr[18]));
         }
     }
-    
-    
-    
+
     var rtnObj = {};
     rtnObj.code = 1;
     rtnObj.age = utils.getAge(arr.birth);
@@ -405,7 +335,7 @@ router.get('/get_eye_predict/:idx', setLog, async function(req, res, next) {
     res.send(rtnObj);
 });
 
-router.get('/is_push/:pid', async function(req, res, next) {
+router.get("/is_push/:pid", async function (req, res, next) {
     const pid = req.params.pid;
     var sql = `SELECT is_push FROM MEMB_tbl WHERE pid = ? AND id != '' `;
     var params = [pid];
@@ -413,21 +343,5 @@ router.get('/is_push/:pid', async function(req, res, next) {
     var obj = arr[0];
     res.send(obj);
 });
-
-
-
-
-router.get('/', setLog, async function(req, res, next) {
-
-    // var sql = ``;
-    // var params = [];
-    // var arr = await utils.queryResult(sql, params);
-    // console.log(arr);
-
-    res.send('api');
-});
-
-
-
 
 module.exports = router;

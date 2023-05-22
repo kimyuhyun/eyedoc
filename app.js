@@ -1,110 +1,120 @@
-process.env.NODE_ENV = (process.env.NODE_ENV && (process.env.NODE_ENV).trim().toLowerCase() == 'production') ? 'production' : 'development';
+process.env.NODE_ENV = process.env.NODE_ENV && process.env.NODE_ENV.trim().toLowerCase() == "production" ? "production" : "development";
 
-const createError = require('http-errors');
-const express = require('express');
-const session = require('express-session');
-const MySQLStore = require('express-mysql-session')(session);
-const path = require('path');
-const cookieParser = require('cookie-parser');
-const requestIp = require('request-ip');
-const logger = require('morgan');
-const bodyParser = require('body-parser');
-const db = require('./db');
-
-const indexRouter = require('./routes/index');
-const adminRouter = require('./routes/admin');
-const crudRouter = require('./routes/crud');
-const analyzerRouter = require('./routes/analyzer');
-const articleRouter = require('./routes/article');
-
-const apiRouter = require('./routes/api');
-const familyRouter = require('./routes/family');
-
-const excelRouter = require('./routes/excel');
-const statRouter = require('./routes/stat');
-const imageRouter = require('./routes/image');
-const termsRouter = require('./routes/terms');
-
-const insightRouter = require('./routes/insight');
-const authRouter = require('./routes/auth');
-const sightTestRouter = require('./routes/sight_test');
-
+const express = require("express");
+const session = require("express-session");
+const MySQLStore = require("express-mysql-session")(session);
+const db = require("./common/db");
+const cookieParser = require("cookie-parser");
+const path = require("path");
+const requestIp = require("request-ip");
+const logger = require("morgan");
+const cors = require("cors");
+const bodyParser = require("body-parser");
+const helmet = require("helmet");
+const noCache = require("nocache");
 const app = express();
 
+app.use(
+    session({
+        key: "sid",
+        name: "session-cookie",
+        secret: "secret",
+        resave: false,
+        saveUninitialized: true,
+        store: new MySQLStore(db.connAccount),
+        // rolling: true,
+        cookie: {
+            maxAge: 24000 * 3600, // 쿠키 유효기간 24시간
+            // httpOnly: false,
+        },
+    })
+);
 
-app.use(requestIp.mw());
-app.use(session({
-    key: 'sid',
-    secret: 'secret',
-    resave: false,
-    saveUninitialized: true,
-    store: new MySQLStore(db.connAccount),
-    cookie: {
-        maxAge: 24000 * 60 * 60 // 쿠키 유효기간 24시간
-    }
-}));
+app.use(noCache());
 
-app.engine('html', require('ejs').renderFile);
-app.set('view engine', 'ejs');
+// const cspOptions = {
+//     directives: {
+//         ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+//         "script-src": ["'self'", "'unsafe-inline'", "'unsafe-eval'", "*.unpkg.com"],
+//         "img-src": ["'self'", "data:", "https://hongslab-image-server.s3.ap-northeast-2.amazonaws.com", "https://picocss.com"],
+//         // 소스에 https와 http 허용
+//         "base-uri": ["http:", "https:"],
+//     },
+// };
+// app.use(helmet({ contentSecurityPolicy: cspOptions }));
+// app.use(helmet.crossOriginOpenerPolicy()); //Cross-Origin-Opener-Policy 헤더를 설정
+// app.use(helmet.crossOriginEmbedderPolicy());
+// app.use(helmet.crossOriginResourcePolicy()); //Cross-Origin-Resource-Policy 헤더를 설정
 
-// view engine setup
-app.set('views', path.join(__dirname, 'views'));
-app.set('view engine', 'jade');
+app.use(
+    helmet({
+        contentSecurityPolicy: false,
+        crossOriginEmbedderPolicy: false,
+        crossOriginOpenerPolicy: false,
+        crossOriginResourcePolicy: false
+    })
+);
+app.use(helmet.dnsPrefetchControl()); //DNS 프리 페치를 비활성화
+app.use(helmet.expectCt()); //Expect-CT 헤더를 설정하여 SSL 인증서 오발급을 예방
+app.use(helmet.frameguard()); //X-Frame-Options 헤더를 설정하여 clickjacking에 대한 보호를 제공
+app.use(helmet.hidePoweredBy()); // X-Powered-By 헤더를 제거
+app.use(helmet.hsts()); //서버에 대한 안전한(SSL/TLS를 통한 HTTP) 연결을 적용하는 Strict-Transport-Security 헤더를 설정
+app.use(helmet.noSniff()); //X-Content-Type-Options 를 설정하여, 선언된 콘텐츠 유형으로부터 벗어난 응답에 대한 브라우저의 MIME 가로채기를 방지
+app.use(helmet.originAgentCluster()); //Origin-Agent-Cluster 헤더를 설정하여 오리진 간 문서를 별도 에이전트 클러스터로 분리
+app.use(helmet.permittedCrossDomainPolicies()); //크로스 도메인 콘텐츠 정책을 설정
+app.use(helmet.referrerPolicy()); //참조 referrer 헤더를 숨김
+app.use(helmet.xssFilter()); // XSS 공격 방지
 
-app.use(logger('dev'));
-app.use(express.json());
-app.use(express.urlencoded({
-    extended: false
-}));
-
-
+app.use(logger("dev"));
+app.use(cors());
 app.use(cookieParser());
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(requestIp.mw());
+app.use(express.json());
+app.use(express.static(path.join(__dirname, "public")));
+app.use(express.static(path.join(__dirname, "./client/build")));
 
-app.use('/data', express.static('data'));
+app.use("/", require("./routes/index"));
+app.use("/dev", require("./routes/dev"));
+app.use("/admin", require("./routes/admin"));
+app.use("/crud", require("./routes/crud"));
+app.use("/article", require("./routes/article"));
+app.use("/api", require("./routes/api"));
+app.use("/family", require("./routes/family"));
+app.use("/excel", require("./routes/excel"));
+app.use("/stat", require("./routes/stat"));
+app.use("/terms", require("./routes/terms"));
+app.use("/insight", require("./routes/insight"));
+app.use("/auth", require("./routes/auth"));
+app.use("/sight_test", require("./routes/sight_test"));
+app.use("/crawler", require("./routes/crawler"));
+app.use("/hp", require("./routes/hp"));
+app.use("/token", require("./routes/token"));
+app.use("/upload", require("./routes/upload"));
+app.use("/codes", require("./routes/codes"));
+app.use("/auto_write", require("./routes/auto_write"));
 
-app.use('/', indexRouter);
-app.use('/admin', adminRouter);
-app.use('/crud', crudRouter);
-app.use('/analyzer', analyzerRouter);
-app.use('/article', articleRouter);
-
-app.use('/api', apiRouter);
-app.use('/family', familyRouter);
-
-app.use('/excel', excelRouter);
-app.use('/stat', statRouter);
-app.use('/image', imageRouter);
-app.use('/terms', termsRouter);
-
-app.use('/insight', insightRouter);
-app.use('/auth', authRouter);
-app.use('/sight_test', sightTestRouter);
-
-
-
-
-// catch 404 and forward to error handler
-app.use(function(req, res, next) {
-    // res.status(404).send('페이지가 없습니다.');
-    // res.status(500).send('500 에러');
-    next(createError(404));
-});
 
 // error handler
-app.use(function(err, req, res, next) {
-    // console.log('ENV', process.env.NODE_ENV);
-    // console.log('ENV', req.app.get('env'));
+app.use(function (err, req, res, next) {
+    console.log("ENV", process.env.NODE_ENV);
 
     // set locals, only providing error in development
     res.locals.message = err.message;
-    res.locals.error = req.app.get('env') === 'development' ? err : {};
+    res.locals.error = req.app.get("env") === "development" ? err : {};
     app.locals.hostname = process.env.HOST_NAME;
 
+    if (process.env.NODE_ENV == "development") {
+        console.error(err.stack);
+        // render the error page
+        res.status(err.status || 500);
+        res.render("error");
+    }
+});
 
-    // render the error page
-    res.status(err.status || 500);
-    res.render('error');
+app.get("*", function (req, res) {
+    res.sendFile(path.join(__dirname, "./client/build/index.html"));
 });
 
 module.exports = app;

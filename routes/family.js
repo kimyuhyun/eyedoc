@@ -2,8 +2,8 @@ const express = require('express');
 const router = express.Router();
 const bodyParser = require('body-parser');
 const fs = require('fs');
-const db = require('../db');
-const utils = require('../Utils');
+const db = require('../common/db');
+const utils = require('../common/utils');
 const moment = require('moment');
 const percentIle = require('percentile');
 // const percentIle = require('stats-percentile');
@@ -50,21 +50,15 @@ async function setLog(req, res, next) {
 router.get('/get_family_list/:pid', setLog, async function(req, res, next) {
     const pid = req.params.pid;
 
-    var arr = [];
-    await new Promise(function(resolve, reject) {
-        const sql = `SELECT idx, id, name1, birth, gender, is_selected, filename0 FROM MEMB_tbl WHERE pid = ? AND id = '' ORDER BY birth ASC`;
-        db.query(sql, pid, function(err, rows, fields) {
-            if (!err) {
-                resolve(rows);
-            } else {
-                console.log(err);
-                res.send(err);
-                return;
-            }
-        });
-    }).then(function(data) {
-        arr = utils.nvl(data);
-    });
+    const sql = `SELECT idx, id, name1, birth, gender, is_selected, filename0 FROM MEMB_tbl WHERE pid = ? ORDER BY birth ASC`;
+    const arr = await utils.queryResult(sql, [pid]);
+    for (const obj of arr) {
+        if (obj.id == pid) {
+            obj.is_me = 1;
+        } else {
+            obj.is_me = 0;
+        }
+    }
     res.send(arr);
 });
 

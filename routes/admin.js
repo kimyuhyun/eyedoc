@@ -1,165 +1,341 @@
-var express = require('express');
-var router = express.Router();
-var bodyParser = require('body-parser');
-var db = require('../db');
-var menus = require('../menu');
-var utils = require('../Utils');
+const express = require("express");
+const router = express.Router();
+const utils = require("../common/utils");
+const moment = require("moment");
+const tokenManager = require("../common/tokenManager");
+const fs = require("fs");
+const middleware = require("../common/middleware");
 
-//메뉴를 전역변수에 넣어준다!
-global.MENUS = menus;
-global.SAVE_MENUS;
-global.CURRENT_URL;
-//
+router.post("/login", async function (req, res, next) {
+    const { id, pw, remember } = req.body;
+    const sql = `SELECT idx, id, name1, level1, filename0 FROM MEMB_tbl WHERE id = ? AND pass1 = PASSWORD(?)`;
+    const arr = await utils.queryResult(sql, [id, pw]);
+    const obj = arr[0];
 
-function userChecking(req, res, next) {
-    // if (process.env.NODE_ENV != 'development') {
-        if (req.session.mid == null) {
-            res.redirect('/admin/login');
+    if (!obj) {
+        res.send({
+            code: 0,
+            msg: "아이디/패스워드가 일치 하지 않습니다.",
+        });
+        return;
+    }
+
+    if (obj.level1 > 2) {
+        res.send({
+            code: 0,
+            msg: "접근권한이 없습니다.",
+        });
+        return;
+    }
+
+    var user = {};
+    var save = {};
+
+    if (remember) {
+        save.id = obj.id;
+        save.pw = pw;
+    }
+
+    user.idx = obj.idx;
+    user.id = obj.id;
+    user.name1 = obj.name1;
+    user.level1 = obj.level1;
+
+    req.session.idx = obj.idx;
+    req.session.id = obj.id;
+    req.session.name1 = obj.name1;
+    req.session.level1 = obj.level1;
+    req.session.browser = req.headers["user-agent"];
+
+    res.send({
+        code: 1,
+        user,
+        save,
+    });
+});
+
+router.get("/logout", async function (req, res, next) {
+    req.session.destroy();
+    res.send({
+        code: 1,
+    });
+});
+
+router.get("/manager", middleware.checkToken, async function (req, res, next) {
+    var { search_column, search_value, orderby, page } = req.query;
+
+    var where = `WHERE level1 = 2 `;
+    var records = [];
+
+    if (search_column && search_value) {
+        where += ` AND ?? LIKE ? `;
+        records.push(search_column);
+        records.push(`%${search_value}%`);
+    } else {
+        search_column = "";
+        search_value = "";
+    }
+
+    if (orderby) {
+        if (orderby.toLowerCase().includes("delete") || orderby.toLowerCase().includes("update") || orderby.toLowerCase().includes("select")) {
+            res.send({ list: [], page_helper: {}, search_column, search_value, orderby });
             return;
         }
-    // }
+    } else {
+        orderby = " idx DESC ";
+    }
 
-    CURRENT_URL = req.baseUrl + req.path;
+    var sql = `SELECT COUNT(*) as cnt FROM MEMB_tbl ${where}`;
+    var arr = await utils.queryResult(sql, records);
+    if (!arr) {
+        res.send({
+            list: [],
+            page_helper: {},
+        });
+        return;
+    }
+    const pageHeler = utils.pageHelper(page, arr[0].cnt ?? 0);
 
-    utils.setSaveMenu(req).then(function(data) {
-        SAVE_MENUS = data;
-        next();
+    records.push(pageHeler.skipSize);
+    records.push(pageHeler.contentSize);
+
+    sql = `SELECT * FROM MEMB_tbl ${where} ORDER BY ${orderby} LIMIT ?, ?`;
+    arr = await utils.queryResult(sql, records);
+    for (obj of arr) {
+        obj.created = utils.utilConvertToMillis(obj.created);
+        obj.modified = utils.utilConvertToMillis(obj.modified);
+    }
+    res.send({
+        list: arr,
+        page_helper: pageHeler,
+        search_column,
+        search_value,
+        orderby,
     });
-}
+});
 
-router.get('/', userChecking, function(req, res, next) {
-    db.query("SELECT show_menu_link FROM GRADE_tbl WHERE level1 = '?'", req.session.level1, function(err, rows, fields) {
-        if (!err) {
-            var tmp = "";
-            if (rows.length > 0) {
-                tmp = rows[0].show_menu_link.substr(1, 9999).split(',');
-            }
-            res.render('./admin/main', {
-                show_menu_link: tmp,
-                level1: req.session.level1,
-            });
-        } else {
-            res.send(err);
+router.get("/user", middleware.checkToken, async function (req, res, next) {
+    var { search_column, search_value, orderby, page } = req.query;
+
+    var where = `WHERE level1 = 9 `;
+    var records = [];
+
+    if (search_column && search_value) {
+        where += ` AND ?? LIKE ? `;
+        records.push(search_column);
+        records.push(`%${search_value}%`);
+    } else {
+        search_column = "";
+        search_value = "";
+    }
+
+    if (orderby) {
+        if (orderby.toLowerCase().includes("delete") || orderby.toLowerCase().includes("update") || orderby.toLowerCase().includes("select")) {
+            res.send({ list: [], page_helper: {}, search_column, search_value, orderby });
+            return;
         }
+    } else {
+        orderby = " idx DESC ";
+    }
+
+    var sql = `SELECT COUNT(*) as cnt FROM MEMB_tbl ${where}`;
+    var arr = await utils.queryResult(sql, records);
+    if (!arr) {
+        res.send({
+            list: [],
+            page_helper: {},
+        });
+        return;
+    }
+    const pageHeler = utils.pageHelper(page, arr[0].cnt ?? 0);
+
+    records.push(pageHeler.skipSize);
+    records.push(pageHeler.contentSize);
+
+    sql = `SELECT * FROM MEMB_tbl ${where} ORDER BY ${orderby} LIMIT ?, ?`;
+    arr = await utils.queryResult(sql, records);
+    for (obj of arr) {
+        obj.created = utils.utilConvertToMillis(obj.created);
+        obj.modified = utils.utilConvertToMillis(obj.modified);
+    }
+    res.send({
+        list: arr,
+        page_helper: pageHeler,
+        search_column,
+        search_value,
+        orderby,
     });
 });
 
-router.get('/login', function(req, res, next) {
-    res.render('./admin/login', {
-        year: new Date().getFullYear(),
-        id: req.cookies['id'],
-        pw: req.cookies['pw'],
+router.get("/grade", middleware.checkToken, async function (req, res, next) {
+    const sql = `SELECT * FROM GRADE_tbl ORDER BY level1 ASC `;
+    const arr = await utils.queryResult(sql, []);
+
+    var list = [];
+    for (row of arr) {
+        row.created = utils.utilConvertToMillis(row.created);
+        row.modified = utils.utilConvertToMillis(row.modified);
+        list.push(row);
+    }
+    res.send(list);
+});
+
+router.get("/analyzer/graph1", middleware.checkToken, async function (req, res, next) {
+    var gap = 0;
+    const dateArr = [];
+    const ttlArr = [];
+    const new1Arr = [];
+    const reArr = [];
+
+    while (gap <= 6) {
+        const date = moment().subtract(gap, "d").format("YYYY-MM-DD");
+        const hangleDate = moment().subtract(gap, "d").format("YYYY년MM월DD일");
+        var total = 0;
+
+        //총방문자 구하기
+        var sql = `SELECT COUNT(DISTINCT ip) AS cnt FROM ANALYZER_tbl WHERE LEFT(created, 10) = ?`;
+        var arr = await utils.queryResult(sql, [date]);
+        total = arr[0].cnt ?? 0;
+
+        //신규방문자 구하기
+        sql = `SELECT COUNT(DISTINCT ip) AS cnt FROM ANALYZER_tbl WHERE VISIT = 1 AND LEFT(created, 10) = ?`;
+        arr = await utils.queryResult(sql, [date]);
+        const new1 = arr[0].cnt ?? 0;
+
+        dateArr.push(hangleDate);
+        ttlArr.push(total);
+        new1Arr.push(new1);
+        reArr.push(total - new1);
+
+        gap++;
+    }
+
+    res.send({
+        date: dateArr.reverse(),
+        ttl: ttlArr.reverse(),
+        new1: new1Arr.reverse(),
+        re: reArr.reverse(),
     });
 });
 
-router.get('/logout', function(req, res, next) {
-    // res.clearCookie('id', {
-    //     path: '/'
-    // });
-    // res.clearCookie('name1', {
-    //     path: '/'
-    // });
-    // res.clearCookie('level1', {
-    //     path: '/'
-    // });
-    req.session.destroy(function(){
-        res.clearCookie('sid');
-        res.send('<script type="text/javascript">alert("로그아웃 되었습니다.");location.href="/admin/login"</script>');
+router.get("/analyzer/graph2", middleware.checkToken, async function (req, res, next) {
+    var gap = 0;
+    const dateArr = [];
+    const trafficArr = [];
+
+    while (gap <= 6) {
+        const date = moment().subtract(gap, "d").format("YYYY-MM-DD");
+        const hangleDate = moment().subtract(gap, "d").format("YYYY년MM월DD일");
+        var total = 0;
+
+        //트래픽 구하기
+        const sql = `SELECT COUNT(ip) AS cnt FROM ANALYZER_tbl WHERE LEFT(created, 10) = ?`;
+        const arr = await utils.queryResult(sql, [date]);
+        const obj = arr[0];
+        trafficArr.push(obj.cnt ?? 0);
+        dateArr.push(hangleDate);
+        gap++;
+        //
+    }
+    res.send({
+        date: dateArr.reverse(),
+        traffic: trafficArr.reverse(),
     });
 });
 
+router.get("/analyzer/graph3", middleware.checkToken, async function (req, res, next) {
+    var gap = 0;
 
+    const today = moment().subtract(0, "d").format("YYYY-MM-DD");
+    const yesterday = moment().subtract(1, "d").format("YYYY-MM-DD");
+    const weekago = moment().subtract(6, "d").format("YYYY-MM-DD");
 
-// POST 는 body 로 받는다!!!
-router.post('/login', function(req, res, next) {
-    db.query("SELECT idx, id, name1, level1 FROM MEMB_tbl WHERE id = ? AND pass1 = PASSWORD(?)", [req.body.id, req.body.pw], function(err, rows, fields) {
-        if (!err) {
-            if (rows[0] != null) {
-                //레벨체크
-                if (rows[0].level1 > 2) {
-                    res.send('<script type="text/javascript">alert("접근권한이 없습니다.");history.back();</script>');
-                    return;
-                }
-                //
+    const timeArr = [];
+    const data1Arr = [];
+    const data2Arr = [];
+    const data3Arr = [];
+    var time = "";
+    for (var i = 0; i < 24; i++) {
+        if (i < 10) {
+            time = "0" + i;
+        } else {
+            time = i;
+        }
 
-                db.query("UPDATE MEMB_tbl SET modified = NOW() WHERE id = ?", req.body.id);
+        timeArr.push(time);
 
+        //오늘 시간대별 트래픽 구하기
+        var sql = `SELECT COUNT(ip) AS cnt FROM ANALYZER_tbl WHERE LEFT(created, 10) = ? AND SUBSTR(created, 12, 2) = ?`;
+        var arr = await utils.queryResult(sql, [today, time]);
+        var obj = arr[0];
+        data1Arr.push(obj.cnt ?? 0);
+        //
 
-                req.session.idx = rows[0].idx;
-                req.session.mid = rows[0].id;
-                req.session.name1 = rows[0].name1;
-                req.session.level1 = rows[0].level1;
+        //어제 시간대별 트래픽 구하기
+        sql = `SELECT COUNT(ip) AS cnt FROM ANALYZER_tbl WHERE LEFT(created, 10) = ? AND SUBSTR(created, 12, 2) = ?`;
+        arr = await utils.queryResult(sql, [yesterday, time]);
+        obj = arr[0];
+        data2Arr.push(obj.cnt ?? 0);
+        //
 
-                if (req.body.remember == 1) {
-                    res.cookie('id', rows[0].id, {
-                        maxAge: 60 * 60 * 1000,
-                        httpOnly: true,
-                        path: '/'
-                    });
-                    res.cookie('pw', req.body.pw, {
-                        maxAge: 60 * 60 * 1000,
-                        httpOnly: true,
-                        path: '/'
-                    });
-                } else {
-                    res.clearCookie('id', {
-                        path: '/'
-                    });
-                    res.clearCookie('pw', {
-                        path: '/'
-                    });
-                }
+        //일주일전 시간대별 트래픽 구하기
+        sql = `SELECT COUNT(ip) AS cnt FROM ANALYZER_tbl WHERE LEFT(created, 10) = ? AND SUBSTR(created, 12, 2) = ?`;
+        arr = await utils.queryResult(sql, [weekago, time]);
+        obj = arr[0];
+        data3Arr.push(obj.cnt ?? 0);
+        //
+    }
 
-                req.session.save(function() {
-                    res.redirect('/admin');
+    res.send({
+        time: timeArr,
+        today: data1Arr,
+        yesterday: data2Arr,
+        weekago: data3Arr,
+    });
+});
+
+router.get("/liveuser", middleware.checkToken, (req, res, next) => {
+    const arr = [];
+
+    fs.readdir("./liveuser", async function (err, filelist) {
+        for (file of filelist) {
+            await new Promise(function (resolve, reject) {
+                fs.readFile("./liveuser/" + file, "utf8", function (err, data) {
+                    resolve(data);
                 });
-            } else {
-                res.send('<script type="text/javascript">alert("아이디/패스워드가 일치 하지 않습니다.");history.back();</script>');
-                return;
-            }
-        } else {
-            console.log('err', err);
-            res.send(err);
-        }
-    });
-});
-
-
-
-router.get('/my_profile', userChecking, function(req, res, next) {
-    var sql = "SELECT * FROM MEMB_tbl WHERE idx = ?";
-
-    db.query(sql, req.session.idx, function(err, rows, fields) {
-        if (!err) {
-            res.render('./admin/my_profile', {
-                row: rows[0],
+            }).then(function (data) {
+                try {
+                    if (file != "dummy") {
+                        const tmp = data.split("|S|");
+                        console.log(data);
+                        // moment.tz.setDefault("Asia/Seoul");
+                        const connTime = moment.unix(tmp[0] / 1000).format("YYYY-MM-DD HH:mm");
+                        const minDiff = moment.duration(moment(new Date()).diff(moment(connTime))).asMinutes();
+                        if (minDiff > 4) {
+                            console.log(minDiff);
+                            fs.unlink("./liveuser/" + file, function (err) {
+                                console.log(err);
+                            });
+                        }
+                        arr.push({
+                            id: file,
+                            url: tmp[1],
+                            date: connTime,
+                        });
+                    }
+                } catch (e) {
+                    console.log(e);
+                }
             });
-        } else {
-            console.log(err);
         }
+
+        console.log(arr);
+
+        res.send({
+            currentTime: moment().format("YYYY-MM-DD HH:mm:ss"),
+            list: arr,
+        });
     });
 });
-
-
-router.get('/page/:page', userChecking, function(req, res, next) {
-    res.render('./admin/' + req.params.page, {
-        myinfo: req.session,
-        board_id: req.params.page,
-    });
-});
-
-// GET 는 query 로 받는다!!!
-router.get('/delete_menu', userChecking, function(req, res, next) {
-    var idx = req.query.idx;
-    db.query('DELETE FROM SAVE_MENU_tbl WHERE idx = ?', idx, function(err, rows, fields) {
-        if (!err) {
-            res.redirect('/admin');
-        } else {
-            console.log('err', err);
-            res.send(err);
-        }
-    });
-});
-
 
 module.exports = router;

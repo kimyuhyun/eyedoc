@@ -1,68 +1,67 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const bodyParser = require('body-parser');
-const fs = require('fs');
-const db = require('../db');
-const utils = require('../Utils');
-const moment = require('moment');
-
+const bodyParser = require("body-parser");
+const fs = require("fs");
+const db = require("../common/db");
+const utils = require("../common/utils");
+const moment = require("moment");
 
 async function setLog(req, res, next) {
     const ip = req.sessionID;
     var rows;
-    await new Promise(function(resolve, reject) {
+    await new Promise(function (resolve, reject) {
         var sql = `SELECT visit FROM ANALYZER_tbl WHERE ip = ? ORDER BY idx DESC LIMIT 0, 1`;
-        db.query(sql, ip, function(err, rows, fields) {
+        db.query(sql, ip, function (err, rows, fields) {
             if (!err) {
                 resolve(rows);
             }
         });
-    }).then(function(data){
+    }).then(function (data) {
         rows = data;
     });
 
-    await new Promise(function(resolve, reject) {
+    await new Promise(function (resolve, reject) {
         var sql = `INSERT INTO ANALYZER_tbl SET ip = ?, agent = ?, visit = ?, created = NOW()`;
         if (rows.length > 0) {
             var cnt = rows[0].visit + 1;
-            db.query(sql, [ip, req.headers['user-agent'], cnt], function(err, rows, fields) {
+            db.query(sql, [ip, req.headers["user-agent"], cnt], function (err, rows, fields) {
                 resolve(cnt);
             });
         } else {
-            db.query(sql, [ip, req.headers['user-agent'], 1], function(err, rows, fields) {
+            db.query(sql, [ip, req.headers["user-agent"], 1], function (err, rows, fields) {
                 resolve(1);
             });
         }
-    }).then(function(data) {
+    }).then(function (data) {
         console.log(data);
     });
 
     //현재 접속자 파일 생성
     var memo = new Date().getTime() + "|S|" + req.baseUrl + req.path;
-    fs.writeFile('./liveuser/'+ip, memo, function(err) {
+    fs.writeFile("./liveuser/" + ip, memo, function (err) {
         console.log(memo);
     });
     //
     next();
 }
 
-router.get('/', function(req, res, next) {
-    const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+router.get("/", function (req, res, next) {
+    const ip = req.headers["x-forwarded-for"] || req.connection.remoteAddress;
 
-    res.render('index', {
-        title: 'Eyedoc Api',
+    res.render("index", {
+        title: "Eyedoc Api",
         session: `${ip}`,
         mode: process.env.NODE_ENV,
     });
 });
 
-router.post('/post', function(req, res, next) {
-    const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+router.post("/post", function (req, res, next) {
+    const ip = req.headers["x-forwarded-for"] || req.connection.remoteAddress;
 
     res.send({
         id: req.body.id,
         name: req.body.name,
-        title: 'Eyedoc Api',
+        title: "Eyedoc Api",
         session: `${ip}`,
         mode: process.env.NODE_ENV,
     });

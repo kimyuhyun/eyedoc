@@ -1,4 +1,7 @@
 .env
+.DS_Store
 node_modules/
-liveuser/
-data/
+client/node_modules/
+public/upload/
+reactjs/
+liveuser

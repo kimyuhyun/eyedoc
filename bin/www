@@ -27,7 +27,7 @@ var server = http.createServer(app);
 
 server.listen(port, "0.0.0.0", function () {
     //추가됨!
-    const db = require("../db");
+    const db = require("../common/db");
 
     setInterval(function () {
         db.query("SELECT 1");
@@ -37,14 +37,22 @@ server.listen(port, "0.0.0.0", function () {
     var os = require("os");
     var ifaces = os.networkInterfaces();
     var result = "";
+    var alias = 0;
     for (var dev in ifaces) {
-        var alias = 0;
         ifaces[dev].forEach(function (details) {
-            if (details.family == "IPv4" && details.internal === false && details.address.match("172")) {
+            if (details.family == "IPv4" && details.internal === false && details.address.startsWith("172")) {
                 result = details.address;
-                ++alias;
+                alias++;
             }
         });
+        if (alias === 0) {
+            ifaces[dev].forEach(function (details) {
+                if (details.family == "IPv4" && details.internal === false && details.address.startsWith("192")) {
+                    result = details.address;
+                    alias++;
+                }
+            });
+        }
     }
     console.log("http://" + result + ":" + port);
 });
