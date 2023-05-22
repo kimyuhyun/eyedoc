@@ -44,24 +44,24 @@ const App = () => {
             <>
                 <BrowserRouter>
                     <Routes>
-                        <Route path="/" element={<Home />}></Route>
-                        {/* <Route path="*" element={<NotFound />}></Route> */}
-                        <Route path="/login" element={<Login />}></Route>
+                        <Route path="/" basename="" element={<Home />}></Route>
+                        <Route path="*" basename="" element={<NotFound />}></Route>
+                        <Route path="/login" basename="" element={<Login />}></Route>
 
-                        <Route path="/adm" element={<Main />}></Route>
-                        <Route path="/adm/mypage" element={<Mypage />}></Route>
-                        <Route path="/adm/codes" element={<Codes />}></Route>
-                        <Route path="/adm/dev/:board_id" element={<Dev />}></Route>
-                        <Route path="/adm/grade" element={<Grade />}></Route>
-                        <Route path="/adm/manager" element={<Manager />}></Route>
-                        <Route path="/adm/user" element={<User />}></Route>
+                        <Route path="/adm" basename="" element={<Main />}></Route>
+                        <Route path="/adm/mypage" basename="" element={<Mypage />}></Route>
+                        <Route path="/adm/codes" basename="" element={<Codes />}></Route>
+                        <Route path="/adm/dev/:board_id" basename="" element={<Dev />}></Route>
+                        <Route path="/adm/grade" basename="" element={<Grade />}></Route>
+                        <Route path="/adm/manager" basename="" element={<Manager />}></Route>
+                        <Route path="/adm/user" basename="" element={<User />}></Route>
 
-                        <Route path="/adm/article/:board_id" element={<Article />}></Route>
+                        <Route path="/adm/article/:board_id" basename="" element={<Article />}></Route>
                         
-                        <Route path="/adm/article/cscenter" element={<Cscenter page={1} />}></Route>
+                        <Route path="/adm/article/cscenter" basename="" element={<Cscenter page={1} />}></Route>
 
-                        <Route path="/adm/analyzer/:gbn" element={<Analyzer />}></Route>
-                        <Route path="/adm/liveuser" element={<LiveUser />}></Route>
+                        <Route path="/adm/analyzer/:gbn" basename="" element={<Analyzer />}></Route>
+                        <Route path="/adm/liveuser" basename="" element={<LiveUser />}></Route>
                     </Routes>
                 </BrowserRouter>
                 {loading && <Loading />}
