@@ -1,4 +1,4 @@
-const aes256Util = require("./aes256Util");
+const aes256Util = require("./aes256util");
 
 module.exports = {
     getToken: () => {
