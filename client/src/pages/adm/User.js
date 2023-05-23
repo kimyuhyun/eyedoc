@@ -59,7 +59,8 @@ export default () => {
         { textName: "번호", colName: "idx", isSort: true },
         { textName: "사진", colName: "filename0", isSort: false },
         { textName: "이름", colName: "name1", isSort: true },
-        { textName: "아이디", colName: "id", isSort: true },
+        { textName: "PID", colName: "pid", isSort: true },
+        { textName: "ID", colName: "id", isSort: true },
         { textName: "등록일", colName: "created", isSort: true },
         { textName: "수정일", colName: "modified", isSort: true },
     ];
@@ -99,6 +100,7 @@ export default () => {
                                         {row.name1}
                                     </button>
                                 </td>
+                                <td className="text-center text-nowrap">{row.pid}</td>
                                 <td className="text-center text-nowrap">{row.id}</td>
                                 <td className="text-center text-nowrap">{row.created}</td>
                                 <td className="text-center text-nowrap">{row.modified}</td>

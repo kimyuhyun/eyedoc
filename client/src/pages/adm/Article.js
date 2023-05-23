@@ -100,7 +100,7 @@ export default () => {
                                             });
                                         }}
                                     >
-                                        {row.title}
+                                        {row.title == "" ? "제목없음" : row.title}
                                     </button>
                                 </td>
 

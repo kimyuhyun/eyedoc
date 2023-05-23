@@ -135,7 +135,7 @@ router.get("/:idx/:id", middlewear.checkToken, async function (req, res, next) {
     sql = `
         SELECT
         A.*,
-        (SELECT COUNT(*) FROM BOARD_tbl WHERE parent_idx = A.idx AND step = 2) as reply_cnt,
+        (SELECT COUNT(*) FROM BOARD_tbl WHERE parent_idx = A.idx AND step = 2 AND is_use = 1) as reply_cnt,
         (SELECT COUNT(*) FROM BOARD_LIKE_tbl WHERE board_idx = A.idx) as like_cnt,
         (SELECT COUNT(*) FROM BOARD_SEE_tbl WHERE board_idx = A.idx) as see_cnt,
         (SELECT COUNT(*) FROM BOARD_LIKE_tbl WHERE board_idx = A.idx AND id = ?) as is_like,
@@ -185,7 +185,7 @@ router.get("/reply_list/:idx/:id", async function (req, res, next) {
             (SELECT COUNT(*) FROM BOARD_LIKE_tbl WHERE board_idx = A.idx) as like_cnt,
             (SELECT COUNT(*) FROM BOARD_LIKE_tbl WHERE board_idx = A.idx AND id = ?) as is_like,
             (SELECT COUNT(*) FROM BOARD_BLOCK_tbl WHERE board_idx = A.idx AND id = ?) as is_block,
-            (SELECT COUNT(*) FROM BOARD_tbl WHERE parent_idx = A.idx AND step = 3) as reply_cnt,
+            (SELECT COUNT(*) FROM BOARD_tbl WHERE parent_idx = A.idx AND step = 3 AND is_use = 1) as reply_cnt,
             (SELECT filename0 FROM MEMB_tbl WHERE id = A.id) as user_thumb
         FROM BOARD_tbl as A
         WHERE A.step = 2
@@ -307,7 +307,7 @@ router.get("/reply_detail/:parent_idx/:id", async function (req, res, next) {
             (SELECT COUNT(*) FROM BOARD_LIKE_tbl WHERE board_idx = A.idx) as like_cnt,
             (SELECT COUNT(*) FROM BOARD_LIKE_tbl WHERE board_idx = A.idx AND id = ?) as is_like,
             (SELECT COUNT(*) FROM BOARD_BLOCK_tbl WHERE board_idx = A.idx AND id = ?) as is_block,
-            (SELECT COUNT(*) FROM BOARD_tbl WHERE parent_idx = A.idx AND step = 3) as reply_cnt,
+            (SELECT COUNT(*) FROM BOARD_tbl WHERE parent_idx = A.idx AND step = 3 AND is_use = 1) as reply_cnt,
             (SELECT filename0 FROM MEMB_tbl WHERE id = A.id) as user_thumb
         FROM BOARD_tbl as A
         WHERE A.step = 2
