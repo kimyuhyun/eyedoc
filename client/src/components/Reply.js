@@ -1,81 +1,54 @@
 import { getUser } from "../utils/common";
 import { writer, listor } from "../utils/store";
 import { useEffect, useState } from "react";
-import ReplyHeader from "./ReplyHeader";
-import ReplyFooter from "./ReplyFooter";
 import ReplyBody from "./ReplyBody";
-import { useRecoilState } from "recoil";
-import { replyParamsState, replyArrayState, loadingState } from "../utils/atom";
 import ReplyDetailList from "./ReplyDetailList";
+import ReplyPager from "./ReplyPager";
+import { useSearchParams } from "react-router-dom";
 
-export default ({ idx, table }) => {
-    const [loading, setLoading] = useRecoilState(loadingState);
+export default ({ idx }) => {
+    const [searchParams, setSearchParams] = useSearchParams();
+    const [loading, setLoading] = useState(false);
+    const [data, setData] = useState(null);
+    const [page, setPage] = useState(1);
+    const [pageHelper, setPageHelper] = useState({});
 
-    const [replyArray, setReplyArray] = useRecoilState(replyArrayState);
-    const [replyParams, setReplyParams] = useRecoilState(replyParamsState);
-
-    const [data, setData] = useState({});
+    const refresh = searchParams.get("refresh");
+    const modal = searchParams.get("modal");
 
     useEffect(() => {
-        if (!replyParams.modal) {
+        (async () => {
             getData();
-        }
-    }, [replyParams.now]);
+        })();
+    }, [refresh, page]);
 
     const getData = async () => {
-        console.log("getData");
         setLoading(true);
-        const url = `/article/reply_list/${idx}/${getUser().id}?page=${replyParams.page}&sort1=${replyParams.sort1}`;
+        const url = `/article/reply_list/${idx}/${getUser().id}?page=${page}&sort1=time`;
+        console.log("getData", url);
         const data = await listor(url);
-        setData(data);
-
-        var tmp = [];
-        if (replyParams.sort1 == "time") {
-            //배열 앞에 붙이기!
-            tmp = [...data.list, ...replyArray];
-        } else {
-            //배열 뒤에 붙이기!
-            tmp = [...replyArray, ...data.list];
-        }
-
-        console.log(tmp);
-
-        const tmpArr = []; 
-        var oldIdx = 0;
-        for (const o of tmp) {
-            if (o.idx != oldIdx) {
-                tmpArr.push(o);
-                oldIdx = o.idx;
-            }
-        }
-
-        setReplyArray([...tmpArr]);
-
+        setData([...data.list]);
+        setPageHelper(data.page_helper);
         setLoading(false);
-
-        setReplyParams({
-            ...replyParams,
-            table,
-            idx,
-        });
     };
 
     if (!data) {
-        return setLoading(true);
+        return "";
     }
 
-    console.log(replyArray, data);
+    console.log(data);
 
     return (
         <>
-            <h3 className="ms-3">댓글</h3>
-            <ReplyHeader page_helper={data.page_helper} />
-            {replyArray.map((row, i) => (
+            <div className="d-flex justify-content-between pe-3">
+                <h3 className="ms-3">댓글</h3>
+                <ReplyPager pageHelper={pageHelper} setPage={setPage} />
+            </div>
+            {data.map((row, i) => (
                 <div key={i} style={{ fontSize: "14px" }}>
                     <ReplyBody row={row} />
                 </div>
             ))}
-            <ReplyFooter page_helper={data.page_helper} />
 
             <form
                 onSubmit={async (e) => {
@@ -91,15 +64,11 @@ export default ({ idx, table }) => {
                         modified: "방금",
                         list: [],
                     };
-
-                    if (replyParams.sort1 == "time") {
-                        setReplyArray([...replyArray, obj]);
-                    } else {
-                        setReplyArray([obj, ...replyArray]);
-                    }
+                    setPage(1);
+                    getData();
                 }}
             >
-                <input type="hidden" name="table" value={table} />
+                <input type="hidden" name="table" value="BOARD_tbl" />
                 <input type="hidden" name="step" value="2" />
                 <input type="hidden" name="parent_idx" value={idx} />
                 <input type="hidden" name="id" value={getUser().id} />
@@ -112,7 +81,10 @@ export default ({ idx, table }) => {
                     </button>
                 </div>
             </form>
-            {replyParams.modal && <ReplyDetailList />}
+            {modal && <ReplyDetailList />}
+
+            <ReplyPager pageHelper={pageHelper} setPage={setPage} />
+            <br />
         </>
     );
 };

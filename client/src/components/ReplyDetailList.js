@@ -4,19 +4,24 @@ import { getUser } from "../utils/common";
 import { writer, listor } from "../utils/store";
 import { replyArrayState, replyParamsState } from "../utils/atom";
 import ReplyBody from "./ReplyBody";
+import { useSearchParams, useNavigate, useLocation } from "react-router-dom";
+
+const table = "BOARD_tbl";
 
 export default () => {
-    const [replyArray, setReplyArray] = useRecoilState(replyArrayState);
-    const [replyParams, setReplyParams] = useRecoilState(replyParamsState);
+    const [searchParams, setSearchParams] = useSearchParams();
+    const [data, setData] = useState({ list: [] });
 
-    const [data, setData] = useState(null);
+    const modal = searchParams.get("modal");
+    const refresh = searchParams.get("refresh");
+    const parentIdx = searchParams.get("parent_idx");
 
     useEffect(() => {
         getData();
-    }, [replyParams.now]);
+    }, [refresh]);
 
     const getData = async () => {
-        const url = `/article/reply_detail/${replyParams.parent_idx}/${getUser().id}`;
+        const url = `/article/reply_detail/${parentIdx}/${getUser().id}`;
         const data = await listor(url);
         setData(data);
     };
@@ -25,59 +30,34 @@ export default () => {
         return "";
     }
 
-    console.log(data, replyParams);
+    console.log(data);
 
     return (
         <div className="modal bg-dark bg-opacity-50" style={{ display: "block" }}>
-            <div className="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div className="modal-dialog modal-lg modal-lg modal-fullscreen-lg-down modal-dialog-centered modal-dialog-scrollable">
                 <div className="modal-content">
                     <div className="modal-header">
-                        <button
-                            type="button"
-                            className="btn-close"
-                            onClick={() => {
-                                //모달창에 나온데이터를 복사해서 부모 리스트에 넣어버린다!
-                                const arr = [...replyArray];
-                                const index = arr.findIndex((item) => item.idx == replyParams.parent_idx);
-                                arr[index] = {
-                                    ...data[0],
-                                };
-                                //
-
-                                console.log(arr);
-
-                                setReplyArray(arr);
-
-                                setReplyParams({
-                                    ...replyParams,
-                                    parent_idx: "",
-                                    modal: false,
-                                });
-                            }}
-                        ></button>
+                        <button type="button" className="btn-close" onClick={() => setSearchParams({})}></button>
                     </div>
                     <div className="modal-body p-0">
-                        {data.map((row, i) => (
+                        {data.list.map((row, i) => (
                             <div key={i} style={{ fontSize: "14px" }}>
                                 <ReplyBody row={row} />
                             </div>
                         ))}
+
                         <form
                             onSubmit={async (e) => {
                                 e.preventDefault();
                                 const frm = Object.fromEntries(new FormData(e.target).entries());
                                 e.target.memo.value = "";
-                                const data2 = await writer(frm);
-
-                                setReplyParams({
-                                    ...replyParams,
-                                    now: Date.now(),
-                                });
+                                await writer(frm);
+                                setSearchParams({ refresh: Date.now(), modal, parent_idx: parentIdx });
                             }}
                         >
-                            <input type="hidden" name="table" value={replyParams.table} />
+                            <input type="hidden" name="table" value={table} />
                             <input type="hidden" name="step" value="3" />
-                            <input type="hidden" name="parent_idx" value={replyParams.parent_idx} />
+                            <input type="hidden" name="parent_idx" value={parentIdx} />
                             <input type="hidden" name="id" value={getUser().id} />
                             <input type="hidden" name="name1" value={getUser().name1} />
 

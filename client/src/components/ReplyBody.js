@@ -2,35 +2,33 @@ import { useState } from "react";
 import { useRecoilState } from "recoil";
 import { replyParamsState, replyArrayState } from "../utils/atom";
 import { writer, tokenIssue } from "../utils/store";
+import { useSearchParams, useNavigate, useLocation } from "react-router-dom";
+
+const table = "BOARD_tbl";
 
 export default ({ row }) => {
-    return (
-        <>
-            <Step2 row={row} />
-            {row.list.map((row2, j) => (
-                <div key={j}>{row2.step == 3 ? <Step3 row={row2} /> : <Step4 row={row2} />}</div>
-            ))}
-        </>
-    );
+    if (row.step == 2) {
+        return <Step2 row={row} />;
+    } else if (row.step == 3) {
+        return <Step3 row={row} />;
+    } else if (row.step == 4) {
+        return <Step4 row={row} />;
+    }
 };
 
 const Step2 = ({ row }) => {
-    const [replyArray, setReplyArray] = useRecoilState(replyArrayState);
-    const [replyParams, setReplyParams] = useRecoilState(replyParamsState);
-    const [replyModifyIndex, setReplyModifyIndex] = useState(-1);
+    const [searchParams, setSearchParams] = useSearchParams();
+    const [modifyIndex, setModifyIndex] = useState(-1);
 
-    const updateRow = (newValue) => {
-        const newArray = [...replyArray];
-        const index = newArray.findIndex((item) => item.idx == newValue.idx);
-        const obj = {
-            ...newArray[index],
-            ...newValue,
-        };
-        if (obj.is_use == 0) {
-            obj.list = [];
+    const modal = searchParams.get("modal");
+    const parentIdx = searchParams.get("parent_idx");
+
+    const dataRefresh = () => {
+        if (modal) {
+            setSearchParams({ refresh: Date.now(), modal, parent_idx: parentIdx });
+        } else {
+            setSearchParams({ refresh: Date.now() });
         }
-        newArray[index] = obj;
-        setReplyArray(newArray);
     };
 
     if (row.is_use == 0) {
@@ -51,27 +49,27 @@ const Step2 = ({ row }) => {
                 <i className="bi bi-dot"></i>
                 <div>좋아요 {row.like_cnt}</div>
                 <i className="bi bi-dot"></i>
-                <div>
-                    <i className={`bi bi-suit-heart${row.is_like == 1 ? "-fill" : ""}`} style={{ fontSize: "12px" }}></i>
-                </div>
+                <div>댓글 {row.reply_cnt}</div>
                 <i className="bi bi-dot"></i>
-                <div>{row.modified}</div>
+                <div>{row.created}</div>
+                {row.created != row.modified && (
+                    <>
+                        <i className="bi bi-dot"></i>
+                        <div>{row.modified} 수정됨</div>
+                    </>
+                )}
                 <div className="flex-fill text-end">
-                    {!replyParams.modal && (
+                    {!modal && (
                         <button
                             className="btn btn-sm btn-link text-dark p-0"
                             onClick={() => {
-                                setReplyParams({
-                                    ...replyParams,
-                                    modal: true,
-                                    parent_idx: row.idx,
-                                });
+                                setSearchParams({ modal: 1, parent_idx: row.idx });
                             }}
                         >
                             [대댓글]
                         </button>
                     )}
-                    <button className="btn btn-sm btn-link p-0" onClick={() => setReplyModifyIndex(row.idx)}>
+                    <button className="btn btn-sm btn-link p-0" onClick={() => setModifyIndex(row.idx)}>
                         [수정]
                     </button>
                     <button
@@ -79,21 +77,12 @@ const Step2 = ({ row }) => {
                         onClick={async () => {
                             if (window.confirm("삭제 하시겠습니까?")) {
                                 const frm = {
-                                    table: replyParams.table,
+                                    table,
                                     is_use: 0,
                                     idx: row.idx,
                                 };
-                                const newValue = await writer(frm);
-                                newValue.step = row.step;
-                                newValue.is_use = 0;
-                                updateRow(newValue);
-
-                                if (replyParams.modal) {
-                                    setReplyParams({
-                                        ...replyParams,
-                                        now: Date.now(),
-                                    });
-                                }
+                                await writer(frm);
+                                dataRefresh();
                             }
                         }}
                     >
@@ -102,31 +91,20 @@ const Step2 = ({ row }) => {
                 </div>
             </div>
             <div className="d-flex flex-row">
-                {replyModifyIndex == row.idx ? (
+                {modifyIndex == row.idx ? (
                     <form
                         onSubmit={async (e) => {
                             //수정!
                             e.preventDefault();
                             const frm = Object.fromEntries(new FormData(e.target).entries());
                             e.target.memo.value = "";
-                            setReplyModifyIndex(-1);
-
-                            const newValue = await writer(frm);
-                            console.log(newValue);
-                            newValue.step = row.step;
-                            newValue.is_use = 1;
-                            updateRow(newValue);
-
-                            if (replyParams.modal) {
-                                setReplyParams({
-                                    ...replyParams,
-                                    now: Date.now(),
-                                });
-                            }
+                            await writer(frm);
+                            setModifyIndex(-1);
+                            dataRefresh();
                         }}
                         className="w-100"
                     >
-                        <input type="hidden" name="table" readOnly value={replyParams.table || ""} />
+                        <input type="hidden" name="table" readOnly value={table} />
                         <input type="hidden" name="idx" readOnly value={row.idx} />
                         <div className="input-group input-group-sm mb-3 mt-3">
                             <textarea name="memo" className="form-control" rows="3" placeholder="내용을 입력해주세요." required defaultValue={row.memo} />
@@ -146,33 +124,18 @@ const Step2 = ({ row }) => {
 };
 
 const Step3 = ({ row }) => {
-    const [replyArray, setReplyArray] = useRecoilState(replyArrayState);
-    const [replyParams, setReplyParams] = useRecoilState(replyParamsState);
-    const [replyModifyIndex, setReplyModifyIndex] = useState(-1);
+    const [searchParams, setSearchParams] = useSearchParams();
+    const [modifyIndex, setModifyIndex] = useState(-1);
 
-    const updateRow = (newValue) => {
-        const array = [...replyArray];
-        const index = array.findIndex((item) => item.idx == row.parent_idx);
-        const array2 = [...array[index].list];
-        const index2 = array2.findIndex((item) => item.idx == row.idx);
+    const modal = searchParams.get("modal");
+    const parentIdx = searchParams.get("parent_idx");
 
-        const obj = {
-            ...array2[index2],
-            ...newValue,
-        };
-        obj.idx = eval(obj.idx);
-
-        array2[index2] = {
-            ...obj,
-        };
-
-        array[index] = {
-            ...array[index],
-            list: [...array2],
-        };
-        console.log(array);
-
-        setReplyArray(array);
+    const dataRefresh = () => {
+        if (modal) {
+            setSearchParams({ refresh: Date.now(), modal, parent_idx: parentIdx });
+        } else {
+            setSearchParams({ refresh: Date.now() });
+        }
     };
 
     if (row.is_use == 0) {
@@ -193,13 +156,15 @@ const Step3 = ({ row }) => {
                 <i className="bi bi-dot"></i>
                 <div>좋아요 {row.like_cnt}</div>
                 <i className="bi bi-dot"></i>
-                <div>
-                    <i className={`bi bi-suit-heart${row.is_like == 1 ? "-fill text-danger" : ""}`} style={{ fontSize: "12px" }}></i>
-                </div>
-                <i className="bi bi-dot"></i>
-                <div>{row.modified}</div>
+                <div>{row.created}</div>
+                {row.created != row.modified && (
+                    <>
+                        <i className="bi bi-dot"></i>
+                        <div>{row.modified} 수정됨</div>
+                    </>
+                )}
                 <div className="flex-fill text-end">
-                    <button className="btn btn-sm btn-link p-0" onClick={() => setReplyModifyIndex(row.idx)}>
+                    <button className="btn btn-sm btn-link p-0" onClick={() => setModifyIndex(row.idx)}>
                         [수정]
                     </button>
                     <button
@@ -207,21 +172,12 @@ const Step3 = ({ row }) => {
                         onClick={async () => {
                             if (window.confirm("삭제 하시겠습니까?")) {
                                 const frm = {
-                                    table: replyParams.table,
+                                    table,
                                     is_use: 0,
                                     idx: row.idx,
                                 };
-                                const newValue = await writer(frm);
-                                newValue.step = row.step;
-                                newValue.is_use = 0;
-                                updateRow(newValue);
-
-                                if (replyParams.modal) {
-                                    setReplyParams({
-                                        ...replyParams,
-                                        now: Date.now(),
-                                    });
-                                }
+                                await writer(frm);
+                                dataRefresh();
                             }
                         }}
                     >
@@ -230,30 +186,20 @@ const Step3 = ({ row }) => {
                 </div>
             </div>
             <div className="d-flex flex-row">
-                {replyModifyIndex == row.idx ? (
+                {modifyIndex == row.idx ? (
                     <form
                         onSubmit={async (e) => {
                             //수정!
                             e.preventDefault();
                             const frm = Object.fromEntries(new FormData(e.target).entries());
                             e.target.memo.value = "";
-                            setReplyModifyIndex(-1);
-
-                            const newValue = await writer(frm);
-                            newValue.step = row.step;
-                            newValue.is_use = 1;
-                            updateRow(newValue);
-
-                            if (replyParams.modal) {
-                                setReplyParams({
-                                    ...replyParams,
-                                    now: Date.now(),
-                                });
-                            }
+                            setModifyIndex(-1);
+                            await writer(frm);
+                            dataRefresh();
                         }}
                         className="w-100"
                     >
-                        <input type="hidden" name="table" readOnly value={replyParams.table || ""} />
+                        <input type="hidden" name="table" readOnly value={table} />
                         <input type="hidden" name="idx" readOnly value={row.idx} />
                         <div className="input-group input-group-sm mb-3 mt-3">
                             <textarea name="memo" className="form-control" rows="3" placeholder="내용을 입력해주세요." required defaultValue={row.memo} />
@@ -273,20 +219,14 @@ const Step3 = ({ row }) => {
 };
 
 const Step4 = ({ row }) => {
-    const [replyParams, setReplyParams] = useRecoilState(replyParamsState);
+    const [searchParams, setSearchParams] = useSearchParams();
 
     return (
         <div className="py-2 ps-5 border-bottom bg-light">
             <button
                 className="btn btn-sm btn-link"
                 onClick={() => {
-                    setReplyParams({
-                        ...replyParams,
-                        modal: true,
-                        parent_idx: row.parent_idx,
-                        table: replyParams.table,
-                        now: Date.now(),
-                    });
+                    setSearchParams({ modal: 1, parent_idx: row.parent_idx });
                 }}
             >
                 {row.memo}

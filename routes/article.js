@@ -161,15 +161,13 @@ router.get("/reply_list/:idx/:id", async function (req, res, next) {
     const sort1 = req.query.sort1;
     const page = req.query.page || 1;
 
-    //댓글 카운트 구하기!
-    var sql = "SELECT count(*) as cnt FROM BOARD_tbl WHERE step = 2 AND is_use = 1 AND parent_idx = ?";
-    var arr = await utils.queryResult(sql, [idx]);
-    var obj = arr[0];
-    console.log(obj.cnt);
+    //step 2 카운트 구하기!
+    var sql2 = "SELECT count(*) as cnt FROM BOARD_tbl WHERE step = 2 AND is_use = 1 AND parent_idx = ?";
+    var arr2 = await utils.queryResult(sql2, [idx]);
+    var obj2 = arr2[0];
+    const pageHelper = utils.pageHelper(page, obj2.cnt ?? 0);
 
-    const pageHelper = utils.pageHelper(page, obj.cnt ?? 0);
-
-    sql = `
+    sql2 = `
         SELECT
             A.idx,
             A.parent_idx,
@@ -195,94 +193,93 @@ router.get("/reply_list/:idx/:id", async function (req, res, next) {
         LIMIT ?, ?
     `;
 
-    var arr = await utils.queryResult(sql, [id, id, idx, pageHelper.skipSize, pageHelper.contentSize]);
+    arr2 = await utils.queryResult(sql2, [id, id, idx, pageHelper.skipSize, pageHelper.contentSize]);
     if (sort1 == "time") {
-        arr.reverse();
+        arr2.reverse();
     }
 
-    const reArr = [];
-    for (const obj of arr) {
-        const sql2 = `SELECT count(*) as cnt FROM BOARD_tbl WHERE parent_idx = ? AND STEP = 3`;
-        const arr2 = await utils.queryResult(sql2, [obj.idx]);
-        const obj2 = arr2[0];
-        const rereArr = [];
-        if (obj.is_use == 1) {
-            if (obj2.cnt > 0) {
-                var sql3 = `
-                    SELECT
-                        A.idx,
-                        A.parent_idx,
-                        A.board_id,
-                        A.id,
-                        A.name1,
-                        A.step,
-                        A.memo,
-                        A.filename0,
-                        A.created,
-                        A.modified,
-                        A.is_use,
-                        (SELECT COUNT(*) FROM BOARD_LIKE_tbl WHERE board_idx = A.idx) as like_cnt,
-                        (SELECT COUNT(*) FROM BOARD_LIKE_tbl WHERE board_idx = A.idx AND id = ?) as is_like,
-                        (SELECT COUNT(*) FROM BOARD_BLOCK_tbl WHERE board_idx = A.idx AND id = ?) as is_block,
-                        (SELECT filename0 FROM MEMB_tbl WHERE id = A.id) as user_thumb,
-                        0 as reply_cnt
-                    FROM BOARD_tbl as A
-                    WHERE A.step = 3
-                    AND A.is_use = 1 
-                    AND A.parent_idx = ?
-                    ORDER BY A.idx ASC
-                `;
-                if (obj2.cnt > 3) {
-                    sql3 += ` LIMIT 3 OFFSET ${obj2.cnt - 3}`;
-                    rereArr.push({
-                        idx: "",
-                        parent_idx: obj.idx,
-                        board_id: "",
-                        id: "",
-                        name1: "",
-                        step: 4,
-                        memo: `이전 대댓글  ${obj2.cnt - 3}개 더보기`,
-                        filename0: "",
-                        modified: "",
-                        is_use: 1,
-                        like_cnt: 0,
-                        is_like: 0,
-                        reply_cnt: 0,
-                        user_thumb: "",
-                        is_modify: 0,
-                        is_delete: 0,
-                    });
-                }
-                const arr3 = await utils.queryResult(sql3, [id, id, obj.idx]);
-                for (const obj3 of arr3) {
-                    obj3.created = utils.utilConvertToMillis(obj3.created);
-                    obj3.modified = utils.utilConvertToMillis(obj3.modified);
-                    if (obj3.id == id) {
-                        obj3.is_modify = 1;
-                        obj3.is_delete = 1;
-                    } else {
-                        obj3.is_modify = 0;
-                        obj3.is_delete = 0;
-                    }
-                    rereArr.push(obj3);
-                }
-            }
-        }
-        obj.created = utils.utilConvertToMillis(obj.created);
-        obj.modified = utils.utilConvertToMillis(obj.modified);
-        if (obj.id == id) {
-            obj.is_modify = 1;
-            obj.is_delete = 1;
+    const newArr = [];
+    for (obj2 of arr2) {
+        obj2.group_id = obj2.idx;
+        obj2.created = utils.utilConvertToMillis(obj2.created);
+        obj2.modified = utils.utilConvertToMillis(obj2.modified);
+        if (obj2.id == id) {
+            obj2.is_modify = 1;
         } else {
-            obj.is_modify = 0;
-            obj.is_delete = 0;
+            obj2.is_modify = 0;
         }
-        obj.list = rereArr;
-        reArr.push(obj);
+        newArr.push(obj2);
+
+        // step 3의 카운트 구하기!
+        var sql3 = `SELECT count(*) as cnt FROM BOARD_tbl WHERE parent_idx = ? AND STEP = 3 AND is_use = 1`;
+        var arr3 = await utils.queryResult(sql3, [obj2.idx]);
+        var obj3 = arr3[0];
+
+        sql3 = `
+            SELECT
+                A.idx,
+                A.parent_idx,
+                A.board_id,
+                A.id,
+                A.name1,
+                A.step,
+                A.memo,
+                A.filename0,
+                A.created,
+                A.modified,
+                A.is_use,
+                (SELECT COUNT(*) FROM BOARD_LIKE_tbl WHERE board_idx = A.idx) as like_cnt,
+                (SELECT COUNT(*) FROM BOARD_LIKE_tbl WHERE board_idx = A.idx AND id = ?) as is_like,
+                (SELECT COUNT(*) FROM BOARD_BLOCK_tbl WHERE board_idx = A.idx AND id = ?) as is_block,
+                (SELECT filename0 FROM MEMB_tbl WHERE id = A.id) as user_thumb,
+                0 as reply_cnt
+            FROM BOARD_tbl as A
+            WHERE A.step = 3
+            AND A.is_use = 1 
+            AND A.parent_idx = ?
+            ORDER BY A.idx ASC
+        `;
+
+        if (obj3.cnt > 3) {
+            sql3 += ` LIMIT 3 OFFSET ${obj3.cnt - 3}`;
+            newArr.push({
+                group_id: obj2.idx,
+                idx: obj2.idx,
+                parent_idx: "",
+                board_id: "",
+                id: "",
+                name1: "",
+                step: 4,
+                memo: `이전 대댓글  ${obj3.cnt - 3}개 더보기`,
+                filename0: "",
+                created: "",
+                modified: "",
+                is_use: 1,
+                like_cnt: 0,
+                is_like: 0,
+                is_block: 0,
+                reply_cnt: 0,
+                user_thumb: "",
+                is_modify: 0,
+            });
+        }
+
+        arr3 = await utils.queryResult(sql3, [id, id, obj2.idx]);
+        for (obj3 of arr3) {
+            obj3.group_id = obj2.idx;
+            obj3.created = utils.utilConvertToMillis(obj3.created);
+            obj3.modified = utils.utilConvertToMillis(obj3.modified);
+            if (obj3.id == id) {
+                obj3.is_modify = 1;
+            } else {
+                obj3.is_modify = 0;
+            }
+            newArr.push(obj3);
+        }
     }
 
     res.send({
-        list: reArr,
+        list: newArr,
         page_helper: pageHelper,
     });
 });
@@ -291,7 +288,11 @@ router.get("/reply_detail/:parent_idx/:id", async function (req, res, next) {
     const parent_idx = req.params.parent_idx;
     const id = req.params.id;
 
-    var sql = `
+    var sql2 = "";
+    var arr2 = [];
+    var obj2 = {};
+
+    sql2 = `
         SELECT
             A.idx,
             A.parent_idx,
@@ -314,66 +315,65 @@ router.get("/reply_detail/:parent_idx/:id", async function (req, res, next) {
         AND A.is_use = 1 
         AND A.idx = ?
     `;
-    var arr = await utils.queryResult(sql, [id, id, parent_idx]);
-    const obj = arr[0];
+    arr2 = await utils.queryResult(sql2, [id, id, parent_idx]);
+    obj2 = arr2[0];
 
-    const reArr = [];
-    const rereArr = [];
+    const newArr = [];
 
-    if (obj && obj.is_use == 1) {
-        sql = `
-            SELECT
-                A.idx,
-                A.parent_idx,
-                A.board_id,
-                A.id,
-                A.name1,
-                A.step,
-                A.memo,
-                A.filename0,
-                A.created,
-                A.modified,
-                A.is_use,
-                (SELECT COUNT(*) FROM BOARD_LIKE_tbl WHERE board_idx = A.idx) as like_cnt,
-                (SELECT COUNT(*) FROM BOARD_LIKE_tbl WHERE board_idx = A.idx AND id = ?) as is_like,
-                (SELECT COUNT(*) FROM BOARD_BLOCK_tbl WHERE board_idx = A.idx AND id = ?) as is_block,
-                0 as reply_cnt,
-                (SELECT filename0 FROM MEMB_tbl WHERE id = A.id) as user_thumb
-            FROM BOARD_tbl as A
-            WHERE A.step = 3
-            AND A.is_use = 1 
-            AND A.parent_idx = ?
-            ORDER BY A.idx ASC
-        `;
-        arr = await utils.queryResult(sql, [id, id, obj.idx]);
-
-        for (const obj2 of arr) {
-            obj2.created = utils.utilConvertToMillis(obj2.created);
-            obj2.modified = utils.utilConvertToMillis(obj2.modified);
-            if (obj2.id == id) {
-                obj2.is_modify = 1;
-                obj2.is_delete = 1;
-            } else {
-                obj2.is_modify = 0;
-                obj2.is_delete = 0;
-            }
-            rereArr.push(obj2);
-        }
+    if (!obj2) {
+        res.send({ list: [] });
+        return;
     }
-    obj.created = utils.utilConvertToMillis(obj.created);
-    obj.modified = utils.utilConvertToMillis(obj.modified);
-    if (obj.id == id) {
-        obj.is_modify = 1;
-        obj.is_delete = 1;
+
+    obj2.group_id = obj2.idx;
+    obj2.created = utils.utilConvertToMillis(obj2.created);
+    obj2.modified = utils.utilConvertToMillis(obj2.modified);
+    if (obj2.id == id) {
+        obj2.is_modify = 1;
     } else {
-        obj.is_modify = 0;
-        obj.is_delete = 0;
+        obj2.is_modify = 0;
+    }
+    newArr.push(obj2);
+
+    var sql3 = `
+        SELECT
+            A.idx,
+            A.parent_idx,
+            A.board_id,
+            A.id,
+            A.name1,
+            A.step,
+            A.memo,
+            A.filename0,
+            A.created,
+            A.modified,
+            A.is_use,
+            (SELECT COUNT(*) FROM BOARD_LIKE_tbl WHERE board_idx = A.idx) as like_cnt,
+            (SELECT COUNT(*) FROM BOARD_LIKE_tbl WHERE board_idx = A.idx AND id = ?) as is_like,
+            (SELECT COUNT(*) FROM BOARD_BLOCK_tbl WHERE board_idx = A.idx AND id = ?) as is_block,
+            0 as reply_cnt,
+            (SELECT filename0 FROM MEMB_tbl WHERE id = A.id) as user_thumb
+        FROM BOARD_tbl as A
+        WHERE A.step = 3
+        AND A.is_use = 1 
+        AND A.parent_idx = ?
+        ORDER BY A.idx ASC
+    `;
+    arr3 = await utils.queryResult(sql3, [id, id, obj2.idx]);
+
+    for (const obj3 of arr3) {
+        obj3.group_id = obj2.idx;
+        obj3.created = utils.utilConvertToMillis(obj3.created);
+        obj3.modified = utils.utilConvertToMillis(obj3.modified);
+        if (obj3.id == id) {
+            obj3.is_modify = 1;
+        } else {
+            obj3.is_modify = 0;
+        }
+        newArr.push(obj3);
     }
 
-    obj.list = rereArr;
-    reArr.push(obj);
-
-    res.send(reArr);
+    res.send({ list: newArr });
 });
 
 router.get("/set_like/:idx/:id", middlewear.checkToken, async function (req, res, next) {

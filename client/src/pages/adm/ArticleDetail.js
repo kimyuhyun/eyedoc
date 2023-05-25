@@ -90,7 +90,7 @@ export default () => {
 
     return (
         <div className="modal bg-dark bg-opacity-50" style={{ display: "block" }}>
-            <div className="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div className="modal-dialog modal-lg modal-fullscreen-lg-down modal-dialog-centered modal-dialog-scrollable">
                 <div className="modal-content">
                     <div className="modal-header">
                         <button
@@ -140,7 +140,7 @@ export default () => {
                         </form>
 
                         {params.idx && <hr />}
-                        {params.idx && <Reply idx={params.idx} table={params.table} />}
+                        {params.idx && <Reply idx={params.idx} />}
                     </div>
                 </div>
             </div>
