@@ -149,6 +149,17 @@ router.get("/:idx/:id", middlewear.checkToken, async function (req, res, next) {
     arr = await utils.queryResult(sql, [id, id, idx]);
     obj = arr[0];
 
+    if (!obj) {
+        res.send({ code: 0, msg: "존재하지 않는 게시글입니다." });
+        return;
+    }
+
+    obj.code = 1;
+
+    if (obj.id == id) {
+        obj.is_modify = 1;
+    }
+    
     obj.created = utils.utilConvertToMillis(obj.created);
     obj.modified = utils.utilConvertToMillis(obj.modified);
 
