@@ -1,6 +1,5 @@
 const express = require("express");
 const router = express.Router();
-const db = require("../common/db");
 const utils = require("../common/utils");
 const middlewear = require("../common/middleware");
 
@@ -159,7 +158,7 @@ router.get("/:idx/:id", middlewear.checkToken, async function (req, res, next) {
     if (obj.id == id) {
         obj.is_modify = 1;
     }
-    
+
     obj.created = utils.utilConvertToMillis(obj.created);
     obj.modified = utils.utilConvertToMillis(obj.modified);
 
@@ -436,23 +435,19 @@ router.get("/set_aricle_push/:parent_idx", middlewear.checkToken, async function
     var tmp_idx = 0;
 
     //항상 상위 댓글 작성자에게 푸시가 날라간다!
-    await new Promise(function (resolve, reject) {
-        var sql = `SELECT parent_idx, id, board_id, step FROM BOARD_tbl WHERE idx = ? `;
-        db.query(sql, parent_idx, function (err, rows, fields) {
-            if (!err) {
-                resolve(rows[0]);
-            } else {
-                console.log(err);
-            }
-        });
-    }).then(function (data) {
-        dest_id = data.id;
+    var sql = `SELECT parent_idx, id, board_id, step FROM BOARD_tbl WHERE idx = ? `;
+    var arr = await utils.queryResult(sql, parent_idx);
+    var obj = arr[0];
+    if (!obj) {
+        res.send({ result: false });
+        return;
+    }
 
-        tmp_idx = data.parent_idx;
-        step = data.step;
-        writer = data.id;
-        board_id = data.board_id;
-    });
+    dest_id = obj.id;
+    tmp_idx = obj.parent_idx;
+    step = obj.step;
+    writer = obj.id;
+    board_id = obj.board_id;
 
     if (step == 2) {
         //최 상위글을 찾는다!!!
@@ -460,29 +455,19 @@ router.get("/set_aricle_push/:parent_idx", middlewear.checkToken, async function
 
         console.log(parent_idx);
 
-        await new Promise(function (resolve, reject) {
-            var sql = `SELECT idx, id, board_id, step FROM BOARD_tbl WHERE idx = ? `;
-            db.query(sql, parent_idx, function (err, rows, fields) {
-                if (!err) {
-                    resolve(rows[0]);
-                } else {
-                    console.log(err);
-                }
-            });
-        }).then(function (data) {
-            tmp_idx = data.idx;
-            writer = data.id;
-        });
+        sql = `SELECT idx, id, board_id, step FROM BOARD_tbl WHERE idx = ? `;
+        arr = await utils.queryResult(sql, parent_idx);
+        obj = arr[0];
+        if (!obj) {
+            res.send({ result: false });
+            return;
+        }
+        tmp_idx = obj.idx;
+        writer = obj.id;
     }
 
-    await new Promise(function (resolve, reject) {
-        var result = utils.sendArticlePush(dest_id, "등록하신 게시물에 댓글이 등록되었습니다.", parent_idx, writer, board_id);
-        resolve(result);
-    }).then(function (data) {
-        res.send({
-            data: data,
-        });
-    });
+    var result = await utils.sendArticlePush(dest_id, "등록하신 게시물에 댓글이 등록되었습니다.", parent_idx, writer, board_id);
+    res.send(result);
 });
 
 module.exports = router;
