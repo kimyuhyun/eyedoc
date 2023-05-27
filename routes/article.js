@@ -172,7 +172,7 @@ router.get("/reply_list/:idx/:id", async function (req, res, next) {
     const page = req.query.page || 1;
 
     //step 2 카운트 구하기!
-    var sql2 = "SELECT count(*) as cnt FROM BOARD_tbl WHERE step = 2 AND is_use = 1 AND parent_idx = ?";
+    var sql2 = "SELECT count(*) as cnt FROM BOARD_tbl WHERE step = 2 AND parent_idx = ?";
     var arr2 = await utils.queryResult(sql2, [idx]);
     var obj2 = arr2[0];
     const pageHelper = utils.pageHelper(page, obj2.cnt ?? 0);
@@ -197,7 +197,6 @@ router.get("/reply_list/:idx/:id", async function (req, res, next) {
             (SELECT filename0 FROM MEMB_tbl WHERE id = A.id) as user_thumb
         FROM BOARD_tbl as A
         WHERE A.step = 2
-        AND is_use = 1 
         AND A.parent_idx = ?
         ORDER BY A.idx DESC
         LIMIT ?, ?
@@ -221,7 +220,7 @@ router.get("/reply_list/:idx/:id", async function (req, res, next) {
         newArr.push(obj2);
 
         // step 3의 카운트 구하기!
-        var sql3 = `SELECT count(*) as cnt FROM BOARD_tbl WHERE parent_idx = ? AND STEP = 3 AND is_use = 1`;
+        var sql3 = `SELECT count(*) as cnt FROM BOARD_tbl WHERE parent_idx = ? AND STEP = 3`;
         var arr3 = await utils.queryResult(sql3, [obj2.idx]);
         var obj3 = arr3[0];
 
@@ -245,7 +244,6 @@ router.get("/reply_list/:idx/:id", async function (req, res, next) {
                 0 as reply_cnt
             FROM BOARD_tbl as A
             WHERE A.step = 3
-            AND A.is_use = 1 
             AND A.parent_idx = ?
             ORDER BY A.idx ASC
         `;
@@ -322,7 +320,6 @@ router.get("/reply_detail/:parent_idx/:id", async function (req, res, next) {
             (SELECT filename0 FROM MEMB_tbl WHERE id = A.id) as user_thumb
         FROM BOARD_tbl as A
         WHERE A.step = 2
-        AND A.is_use = 1 
         AND A.idx = ?
     `;
     arr2 = await utils.queryResult(sql2, [id, id, parent_idx]);
@@ -365,7 +362,6 @@ router.get("/reply_detail/:parent_idx/:id", async function (req, res, next) {
             (SELECT filename0 FROM MEMB_tbl WHERE id = A.id) as user_thumb
         FROM BOARD_tbl as A
         WHERE A.step = 3
-        AND A.is_use = 1 
         AND A.parent_idx = ?
         ORDER BY A.idx ASC
     `;
