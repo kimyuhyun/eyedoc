@@ -108,11 +108,6 @@ router.get("/:board_id", middlewear.checkToken, async function (req, res, next) 
     res.send({
         list: arr,
         page_helper: pageHeler,
-        // page: pageHeler.pageNum,
-        // board_id,
-        // search_column,
-        // search_value,
-        // orderby,
     });
 });
 
@@ -154,14 +149,12 @@ router.get("/:idx/:id", middlewear.checkToken, async function (req, res, next) {
     }
 
     obj.code = 1;
-
+    obj.is_modify = 0;
     if (obj.id == id) {
         obj.is_modify = 1;
     }
-
     obj.created = utils.utilConvertToMillis(obj.created);
     obj.modified = utils.utilConvertToMillis(obj.modified);
-
     res.send(obj);
 });
 

@@ -1,10 +1,6 @@
-const fs = require("fs");
 const db = require("./db");
-const requestIp = require("request-ip");
 const axios = require("axios");
-const crypto = require("crypto");
-const utils = require("./utils");
-const { log } = require("console");
+const moment = require("moment");
 
 class Utils {
     async queryResult(sql, params) {
@@ -308,40 +304,37 @@ class Utils {
     }
 
     utilConvertToMillis(time) {
-        var time = new Date(time).getTime() / 1000;
-        var currentTime = Math.floor(new Date().getTime() / 1000);
-        var inputTime = time;
-        var diffTime = currentTime - inputTime;
-        var postTime;
-        switch (true) {
-            case diffTime < 60:
-                postTime = "방금";
-                break;
-            case diffTime < 3600:
-                postTime = parseInt(diffTime / 60) + "분 전";
-                break;
-            case diffTime < 86400:
-                postTime = parseInt(diffTime / 3600) + "시간 전";
-                break;
-            case diffTime < 604800:
-                postTime = parseInt(diffTime / 86400) + "일 전";
-                break;
-            case diffTime > 604800:
-                var date = new Date(time * 1000);
-                var month = eval(date.getMonth() + 1);
-                var day = date.getDate();
-                if (eval(date.getMonth() + 1) < 10) {
-                    month = "0" + eval(date.getMonth() + 1);
-                }
-                if (date.getDate() < 10) {
-                    day = "0" + date.getDate();
-                }
-                postTime = date.getFullYear() + "-" + month + "-" + day;
-                break;
-            default:
-                postTime = time;
+        const dateTime = new Date(time).getTime();
+        const nowTime = Math.floor(new Date().getTime());
+        const date = moment(dateTime);
+        const now = moment(nowTime);
+        console.log(date.format(), now.format());
+        var diff = now.diff(date, "seconds");
+        if (diff < 60) {
+            return `${diff}초 전`;
         }
-        return postTime;
+        diff = now.diff(date, "minutes");
+        if (diff < 60) {
+            return `${diff}분 전`;
+        }
+        diff = now.diff(date, "hours");
+        if (diff < 24) {
+            return `${diff}시간 전`;
+        }
+        diff = now.diff(date, "days");
+        if (diff < 7) {
+            return `${diff}일 전`;
+        }
+        diff = now.diff(date, "weeks");
+        if (diff < 4) {
+            return `${diff}주 전`;
+        }
+        diff = now.diff(date, "months");
+        if (diff < 12) {
+            return `${diff}달 전`;
+        }
+        diff = now.diff(date, "years");
+        return `${diff}년 전`;
     }
 
     replaceAll(str, searchStr, replaceStr) {
