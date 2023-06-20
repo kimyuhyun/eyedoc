@@ -4,7 +4,7 @@ const tokenManager = require("../common/tokenManager");
 
 router.post("/issue", async function (req, res, next) {
     //user-agent 체크!
-    // console.log(req.headers);
+    console.log(req.headers);
     const agent = req.headers["user-agent"];
     if (agent.includes("Post") || agent.includes("axios") || agent.includes("curl")) {
         res.send({ code: 0, msg: "토큰을 발급할 수 없습니다." });
