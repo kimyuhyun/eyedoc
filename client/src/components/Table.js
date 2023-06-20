@@ -51,13 +51,11 @@ export default ({ children, columns, table }) => {
                     isToast: true,
                     message: data.msg,
                 });
-                
+
                 setParams({
                     ...params,
                     now: Date.now(),
                 });
-
-                
             }
         }
     };
@@ -113,20 +111,22 @@ export default ({ children, columns, table }) => {
                 <button type="submit" className="btn btn-danger btn-sm">
                     삭제
                 </button>
-                <button
-                    type="button"
-                    className="btn btn-primary btn-sm"
-                    onClick={() => {
-                        setParams({
-                            ...params,
-                            modal: true,
-                            idx: "",
-                            table,
-                        });
-                    }}
-                >
-                    등록
-                </button>
+                {params.board_id !== "cscenter" && (
+                    <button
+                        type="button"
+                        className="btn btn-primary btn-sm"
+                        onClick={() => {
+                            setParams({
+                                ...params,
+                                modal: true,
+                                idx: "",
+                                table,
+                            });
+                        }}
+                    >
+                        등록
+                    </button>
+                )}
             </div>
         </form>
     );

@@ -13,12 +13,10 @@ import { getUser } from "../../utils/common";
 const table = "BOARD_tbl";
 const board_id = "cscenter";
 
-export default ({ page }) => {
+export default () => {
     const [looading, setLoading] = useRecoilState(loadingState);
     const [toast, setToast] = useRecoilState(toastState);
-
     const [params, setParams] = useRecoilState(paramsState);
-
     const [data, setData] = useState({ list: [], page_helper: {} });
 
     useEffect(() => {
@@ -34,10 +32,10 @@ export default ({ page }) => {
 
         setParams({
             ...params,
-            page,
-            table,
             board_id,
         });
+
+        console.log(params);
     };
 
     const getDetail = async (idx) => {
@@ -73,7 +71,6 @@ export default ({ page }) => {
 
     const columns = [
         { textName: "번호", colName: "idx", isSort: true },
-        { textName: "구분", colName: "title", isSort: true },
         { textName: "내용", colName: "memo", isSort: false },
         { textName: "답변YN", colName: "comment", isSort: true },
         { textName: "작성자", colName: "name1", isSort: false },
@@ -98,8 +95,6 @@ export default ({ page }) => {
                                     <input type="checkbox" name="idx" value={row.idx} />
                                 </td>
                                 <td className="text-center text-nowrap">{row.idx}</td>
-
-                                <td className="text-center text-nowrap">{row.title}</td>
 
                                 <td className="text-nowrap">
                                     <button
@@ -182,10 +177,7 @@ export default ({ page }) => {
                                     <input name="board_id" type="hidden" defaultValue={board_id} />
 
                                     <input name="id" type="hidden" defaultValue={params.data ? params.data.id : getUser().id} />
-                                    <input name="name1" type="hidden" defaultValue={params.data ? params.data.id : getUser().name1} />
-
-                                    <Field title="구분" name1="title" type="text" readOnly={true} required={true} defaultValue={params.data ? params.data.title : ""} />
-
+                                                                        
                                     <Field title="질문" name1="memo" type="textarea" readOnly={true} required={true} defaultValue={params.data ? params.data.memo : ""} />
 
                                     <Field title="답변" name1="comment" type="textarea" readOnly={false} required={false} defaultValue={params.data ? params.data.comment : ""} />

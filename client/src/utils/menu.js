@@ -35,21 +35,20 @@ const menu = [
                 title: "커뮤니티",
                 link: "/adm/article/comm",
             },
-            {
-                title: "공지사항",
-                link: "/adm/article/notice",
-            },
-            {
-                title: "뉴스레터",
-                link: "/adm/article/news",
-            },
-            
+            // {
+            //     title: "뉴스레터",
+            //     link: "/adm/article/news",
+            // },
         ],
     },
     {
         icon: "bi bi-person-circle",
         title: "고객센터",
         child: [
+            {
+                title: "공지사항",
+                link: "/adm/article/notice",
+            },
             {
                 title: "자주묻는질문",
                 link: "/adm/article/faq",
@@ -88,4 +87,3 @@ const menu = [
     },
 ];
 module.exports = menu;
-

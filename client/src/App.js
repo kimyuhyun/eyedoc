@@ -58,7 +58,7 @@ const App = () => {
 
                         <Route path="/adm/article/:board_id" basename="" element={<Article />}></Route>
                         
-                        <Route path="/adm/article/cscenter" basename="" element={<Cscenter page={1} />}></Route>
+                        <Route path="/adm/article/cscenter" basename="" element={<Cscenter />}></Route>
 
                         <Route path="/adm/analyzer/:gbn" basename="" element={<Analyzer />}></Route>
                         <Route path="/adm/liveuser" basename="" element={<LiveUser />}></Route>
