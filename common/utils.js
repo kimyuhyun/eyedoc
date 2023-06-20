@@ -311,7 +311,7 @@ class Utils {
         console.log(date.format(), now.format());
         var diff = now.diff(date, "seconds");
         if (diff < 60) {
-            return `${diff}초 전`;
+            return `방금`;
         }
         diff = now.diff(date, "minutes");
         if (diff < 60) {

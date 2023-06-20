@@ -245,8 +245,8 @@ router.get("/reply_list/:idx/:id", async function (req, res, next) {
             sql3 += ` LIMIT 3 OFFSET ${obj3.cnt - 3}`;
             newArr.push({
                 group_id: obj2.idx,
-                idx: obj2.idx,
-                parent_idx: "",
+                idx: "",
+                parent_idx: obj2.idx,
                 board_id: "",
                 id: "",
                 name1: "",
