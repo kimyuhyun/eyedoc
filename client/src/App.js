@@ -56,8 +56,7 @@ const App = () => {
                         <Route path="/adm/manager" basename="" element={<Manager />}></Route>
                         <Route path="/adm/user" basename="" element={<User />}></Route>
 
-                        <Route path="/adm/article/:board_id" basename="" element={<Article />}></Route>
-                        
+                        <Route path="/adm/article/:board_id" basename="" element={<Article />}></Route>                        
                         <Route path="/adm/article/cscenter" basename="" element={<Cscenter />}></Route>
 
                         <Route path="/adm/analyzer/:gbn" basename="" element={<Analyzer />}></Route>
