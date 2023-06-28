@@ -128,6 +128,7 @@ router.get("/", async function (req, res, next) {
 });
 
 function createJson(json) {
+    console.log(json);
     const whiteList = ["PD", "SPH", "CYL", "AXIS", "OD", "OS", "R", "L", "우", "좌"];
 
     //json 데이터에서 화이트리스트와 매칭되는 rect x0,x1,y0,y1 값을 구한다.

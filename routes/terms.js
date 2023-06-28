@@ -1,9 +1,8 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
 
-
-router.get('/use_terms', async function(req, res, next) {
-    const title = '이용약관';
+router.get("/use_terms", async function (req, res, next) {
+    const title = "이용약관";
     const memo = `제1조 [목 적]
 이 약관은 (주)티아이(이하 “회사”)가 제공하는 어플리케이션 서비스 아이닥(이하 “서비스”)을 이용함에 있어 회사와 사용자 사이의 권리ㆍ의무 및 책임사항을 규정함을 목적으로 합니다.
 사용자는 본 이용 약관을 자세히 읽은 후 이용 약관에 동의하지 않을 경우, 본 이용 약관에 동의하거나 서비스에 등록 또는 액세스하거나 이를 이용(이하 “이용”)하지 말아야 합니다. (주)티아이는 고객과 체결한 본 이용 약관의 개별 사본을 저장하지 않으므로 고객이 본인 기록용으로 본 약관의 사본을 저장해두는 것이 좋습니다.
@@ -98,8 +97,8 @@ router.get('/use_terms', async function(req, res, next) {
     });
 });
 
-router.get('/policy', async function(req, res, next) {
-    const title = '개인정보 처리방침';
+router.get("/policy", async function (req, res, next) {
+    const title = "개인정보 처리방침";
     const memo = `개인정보 취급방침 (이하, “개인정보 취급방침”)을 유의하여 읽어 주시기 바랍니다. (주)티아이가 제공하는 서비스를 이용하기 위하여, 본 서비스의 이용자로써 귀하는 본 개인정보를 취급방침에 동의하여야 합니다. 개인정보 취급방침 조항에 동의하지 아니할 경우, 서비스에 접속하거나 이용하지 마십시오.
 개인정보.  귀하의 개인정보는 (주)티아이에게 소중하며, (주)티아이는 (주)티아이가 제공하는 서비스와 연관되어 수집하는 귀하의 개인식별정보 (“개인정보”)를 신중하게 관리하기 위해 최선을 다하고 있습니다. “개인정보”란 단독으로 또는 다른 정보와 조합하여, 개인의 이름과 성, 개인 프로필, 전자 메일 주소 또는 기타 연락처 정보 등을 포함하나 이에 국한되지 아니한 개인을 식별할 수 있는 수 있는 정보를 의미합니다.  본 개인정보 취급방침은 수집되고 추적되는 정보의 유형, 정보의 유용, 그리고 정보의 공유를 포함한 (주)티아이의 정보 취급 관행에 대한 설명합니다. (주)티아이는 귀하가 서비스에 제공한 데이터를 보호하기 위해 최선을 다하고 있으나, 동시에 귀하가 서비스를 이용하면서  서비스를 이용하는 타이용자들과 귀하의 진척사항에 대한 정보를 상호공유할 것을 권장하고 있습니다.
 개인 건강 정보. (주)티아이는 또한 귀하의 건강 정보 (“개인 건강 정보”)를 보호하기 위해 최선을 다하고 있습니다. “개인 건강 정보” 는 인구통계학적 정보를 포함하여 귀하를 식별할 수 있고, 귀하의 과거, 현재 또는 미래의 신체적 또는 정신적 건강 상태와 관련된 정보 또는 과거, 현재 또는 미래의 귀하의 건강 관리의 서비스 비용과 관련된 정보를 포함한 귀하의 개인정보의 부분 집합입니다.
@@ -166,5 +165,45 @@ router.get('/policy', async function(req, res, next) {
     });
 });
 
+router.get("/account_delete_request_policy", (req, res, next) => {
+    const html = `
+    <!doctype html>
+    <html lang="en">
+    <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>아이닥</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
+    </head>
+    <body class="bg-light">
+        <div class="container">
+            <div class="card shadow m-3">
+                <div class="card-body">
+                    <h2 class="card-title">나의 계정 및 데이터는 어떻게 삭제합니까?</h2>
+                    <p class="card-text">
+                        계정을 삭제하려면 다음 단계를 따르세요. 떠나시다니 유감입니다 🙁
+
+                        <ol>
+                            <li>어플리케이션 하단 탭에서 "더보기"를 탭하세요.</li>
+                            <li>오른쪽 위의 ⚙ 를 탭하세요.</li>
+                            <li>"회원탈퇴" 탭하세요.</li>
+                            <li>단계에 따라 계정을 삭제하십시오.</li>
+                        </ol>
+
+                        <ul>
+                            <li>서비스 탈퇴후 30일 간 데이터가 보관 됩니다.</li>
+                            <li>30일이 지나면 계정을 더 이상 복구할 수 없으며 계정 삭제 프로세스가 시작됩니다.</li>
+                            <li>즉, 사용자 데이터베이스의 계정및 모든 데이터가 삭제됩니다.</li>
+                            <li>특정 법적, 보안 및 비즈니스 요구를 위해 일부 개인 데이터를 보유할 수 있습니다.</li>
+                        </ul>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </body>
+    </html>
+    `;
+    res.send(html);
+});
 
 module.exports = router;
