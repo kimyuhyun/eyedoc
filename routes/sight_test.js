@@ -7,49 +7,9 @@ const moment = require('moment');
 const requestIp = require('request-ip');
 const commaNumber = require('comma-number');
 const shortHash = require("shorthash");
-const { log } = require('console');
+const middleware = require("../common/middleware");
 
-
-async function setLog(req, res, next) {
-    const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-    var rows;
-    await new Promise(function(resolve, reject) {
-        var sql = `SELECT visit FROM ANALYZER_tbl WHERE ip = ? ORDER BY idx DESC LIMIT 0, 1`;
-        db.query(sql, ip, function(err, rows, fields) {
-            if (!err) {
-                resolve(rows);
-            }
-        });
-    }).then(function(data){
-        rows = data;
-    });
-
-    await new Promise(function(resolve, reject) {
-        var sql = `INSERT INTO ANALYZER_tbl SET ip = ?, agent = ?, visit = ?, created = NOW()`;
-        if (rows.length > 0) {
-            var cnt = rows[0].visit + 1;
-            db.query(sql, [ip, req.headers['user-agent'], cnt], function(err, rows, fields) {
-                resolve(cnt);
-            });
-        } else {
-            db.query(sql, [ip, req.headers['user-agent'], 1], function(err, rows, fields) {
-                resolve(1);
-            });
-        }
-    }).then(function(data) {
-        console.log(data);
-    });
-
-    //현재 접속자 파일 생성
-    var memo = new Date().getTime() + "|S|" + req.baseUrl + req.path;
-    fs.writeFile('./liveuser/'+ip, memo, function(err) {
-        console.log(memo);
-    });
-    //
-    next();
-}
-
-router.post('/sight_test_detail_add', async function(req, res, next) {
+router.post('/sight_test_detail_add', middleware.checkToken, async function(req, res, next) {
     var sightTesIdx = req.body.sight_test_idx;
     var membIdx = req.body.memb_idx;
     var eyeGbnList = req.body.eye_gbn;
@@ -89,7 +49,7 @@ router.post('/sight_test_detail_add', async function(req, res, next) {
     res.send(true);
 });
 
-router.get('/get_sight_test_list/:memb_idx', setLog, async function(req, res, next) {
+router.get('/get_sight_test_list/:memb_idx', middleware.checkToken, async function(req, res, next) {
     const membIdx = req.params.memb_idx;
 
     var sql = `SELECT * FROM SIGHT_TEST_tbl WHERE memb_idx = ? ORDER BY created DESC`;
@@ -99,7 +59,7 @@ router.get('/get_sight_test_list/:memb_idx', setLog, async function(req, res, ne
     res.send(rtnArr);
 });
 
-router.get('/get_sight_test_data/:idx', setLog, async function(req, res, next) {
+router.get('/get_sight_test_data/:idx', middleware.checkToken, async function(req, res, next) {
     const idx = req.params.idx;
 
     var sql = `
@@ -116,7 +76,7 @@ router.get('/get_sight_test_data/:idx', setLog, async function(req, res, next) {
     res.send(obj);
 });
 
-router.get('/get_sight_test_detail_list/:sight_test_idx', setLog, async function(req, res, next) {
+router.get('/get_sight_test_detail_list/:sight_test_idx', middleware.checkToken, async function(req, res, next) {
     const sight_test_idx = req.params.sight_test_idx;
 
     var sql = `SELECT * FROM SIGHT_TEST_DETAIL_tbl WHERE sight_test_idx = ?`;
@@ -125,7 +85,7 @@ router.get('/get_sight_test_detail_list/:sight_test_idx', setLog, async function
     res.send(rtnArr);
 });
 
-router.get('/get_sight_test_insight/:memb_idx', setLog, async function(req, res, next) {
+router.get('/get_sight_test_insight/:memb_idx', middleware.checkToken, async function(req, res, next) {
     const membIdx = req.params.memb_idx;
 
     var results = {};
@@ -206,7 +166,7 @@ router.get('/get_sight_test_insight/:memb_idx', setLog, async function(req, res,
     res.send(results);
 });
 
-router.get('/get_share_link/:sight_test_idx', setLog, async function(req, res, next) {
+router.get('/get_share_link/:sight_test_idx', middleware.checkToken, async function(req, res, next) {
     const idx = req.params.sight_test_idx;
    
     //숏해쉬가 너무 짧아! 중복이 생긴다!! 그래서 현재시간과 함께 암호화 한다!
@@ -225,7 +185,7 @@ router.get('/get_share_link/:sight_test_idx', setLog, async function(req, res, n
     res.send(token);
 });
 
-router.get('/get_sight_test_idx/:token', setLog, async function(req, res, next) {
+router.get('/get_sight_test_idx/:token', middleware.checkToken, async function(req, res, next) {
     const token = req.params.token;
 
     var sql = `SELECT sight_test_idx FROM SIGHT_TEST_SHARE_tbl WHERE token = ?`;
@@ -240,7 +200,7 @@ router.get('/get_sight_test_idx/:token', setLog, async function(req, res, next) 
     
 });
 
-router.post('/delete_sight_test', setLog, async function(req, res, next) {
+router.post('/delete_sight_test', middleware.checkToken, async function(req, res, next) {
     const idx = req.body.idx;
     
     var sql = `DELETE FROM SIGHT_TEST_DETAIL_tbl WHERE sight_test_idx = ?`;
@@ -261,7 +221,7 @@ router.post('/delete_sight_test', setLog, async function(req, res, next) {
      });
 });
 
-router.get('/', setLog, async function(req, res, next) {
+router.get('/', middleware.checkToken, async function(req, res, next) {
 
     // var sql = ``;
     // var params = [];
@@ -270,7 +230,5 @@ router.get('/', setLog, async function(req, res, next) {
 
     res.send('dev');
 });
-
-
 
 module.exports = router;

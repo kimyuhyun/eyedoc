@@ -7,47 +7,10 @@ const utils = require('../common/utils');
 const moment = require('moment');
 const percentIle = require('percentile');
 // const percentIle = require('stats-percentile');
+const middleware = require("../common/middleware");
 
-async function setLog(req, res, next) {
-    const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-    var rows;
-    await new Promise(function(resolve, reject) {
-        var sql = `SELECT visit FROM ANALYZER_tbl WHERE ip = ? ORDER BY idx DESC LIMIT 0, 1`;
-        db.query(sql, ip, function(err, rows, fields) {
-            if (!err) {
-                resolve(rows);
-            }
-        });
-    }).then(function(data){
-        rows = data;
-    });
 
-    await new Promise(function(resolve, reject) {
-        var sql = `INSERT INTO ANALYZER_tbl SET ip = ?, agent = ?, visit = ?, created = NOW()`;
-        if (rows.length > 0) {
-            var cnt = rows[0].visit + 1;
-            db.query(sql, [ip, req.headers['user-agent'], cnt], function(err, rows, fields) {
-                resolve(cnt);
-            });
-        } else {
-            db.query(sql, [ip, req.headers['user-agent'], 1], function(err, rows, fields) {
-                resolve(1);
-            });
-        }
-    }).then(function(data) {
-        console.log(data);
-    });
-
-    //현재 접속자 파일 생성
-    var memo = new Date().getTime() + "|S|" + req.baseUrl + req.path;
-    fs.writeFile('./liveuser/'+ip, memo, function(err) {
-        console.log(memo);
-    });
-    //
-    next();
-}
-
-router.get('/get_family_list/:pid', setLog, async function(req, res, next) {
+router.get('/get_family_list/:pid', middleware.checkToken, async function(req, res, next) {
     const pid = req.params.pid;
 
     const sql = `SELECT idx, id, name1, birth, gender, is_selected, filename0 FROM MEMB_tbl WHERE pid = ? ORDER BY birth ASC`;
@@ -62,7 +25,7 @@ router.get('/get_family_list/:pid', setLog, async function(req, res, next) {
     res.send(arr);
 });
 
-router.get('/get_family_detail/:idx', setLog, async function(req, res, next) {
+router.get('/get_family_detail/:idx', middleware.checkToken, async function(req, res, next) {
     const idx = req.params.idx;
 
     var arr = {};
@@ -83,7 +46,7 @@ router.get('/get_family_detail/:idx', setLog, async function(req, res, next) {
     res.send(arr);
 });
 
-router.get('/get_family_select_check/:pid', setLog, async function(req, res, next) {
+router.get('/get_family_select_check/:pid', middleware.checkToken, async function(req, res, next) {
     const pid = req.params.pid;
 
     await new Promise(function(resolve, reject) {
@@ -103,7 +66,7 @@ router.get('/get_family_select_check/:pid', setLog, async function(req, res, nex
 });
 
 
-router.post('/set_family_select', setLog, async function(req, res, next) {
+router.post('/set_family_select', middleware.checkToken, async function(req, res, next) {
     const { pid, idx } = req.body;
 
     await new Promise(function(resolve, reject) {
@@ -157,7 +120,7 @@ router.post('/set_family_select', setLog, async function(req, res, next) {
     res.send(arr);
 });
 
-router.get('/del_family/:pid/:idx', setLog, async function(req, res, next) {
+router.get('/del_family/:pid/:idx', middleware.checkToken, async function(req, res, next) {
     const { pid, idx } = req.params;
 
     //가족이 1명은 있어야 하므로 체크한다!
@@ -198,8 +161,6 @@ router.get('/del_family/:pid/:idx', setLog, async function(req, res, next) {
             birth: obj.birth,
         });
     }
-
-
 });
 
 

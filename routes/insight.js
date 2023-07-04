@@ -8,16 +8,10 @@ const moment = require('moment');
 const requestIp = require('request-ip');
 const commaNumber = require('comma-number');
 const percentIle = require('percentile');
-
-async function setLog(req, res, next) {
-    //토큰 체크!
-    
-    next();
-}
+const middleware = require("../common/middleware");
 
 
-
-router.get('/:memb_idx', setLog, async function(req, res, next) {
+router.get('/:memb_idx', middleware.checkToken, async function(req, res, next) {
     const memb_idx = req.params.memb_idx;
     var tmpArr = await utils.getLawData();
 
@@ -152,7 +146,7 @@ router.get('/:memb_idx', setLog, async function(req, res, next) {
     });
 });
 
-router.get('/test/:age', setLog, async function(req, res, next) {
+router.get('/test/:age', middleware.checkToken, async function(req, res, next) {
     const age = req.params.age
 
     var sql = `SELECT AVG(rdata) as se FROM LAWDATA_tbl WHERE age = ?`;

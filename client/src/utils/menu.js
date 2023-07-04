@@ -36,8 +36,8 @@ const menu = [
                 link: "/adm/article/comm",
             },
             {
-                title: "홈화면 배너슬라이드",
-                link: "/adm/article/slide",
+                title: "홈화면 배너 marquee 텍스트",
+                link: "/adm/article/marquee",
             },
         ],
     },

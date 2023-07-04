@@ -1,8 +1,9 @@
 const express = require("express");
 const router = express.Router();
 const utils = require("../common/utils");
+const middleware = require("../common/middleware");
 
-router.get("/", async (req, res, next) => {
+router.get("/", middleware.checkToken, async (req, res, next) => {
     var { search_column, search_value, orderby, page } = req.query;
 
     var where = `WHERE is_op = 1`;
@@ -56,7 +57,7 @@ router.get("/", async (req, res, next) => {
     });
 });
 
-router.get("/get_hp", async function (req, res, next) {
+router.get("/get_hp", middleware.checkToken, async function (req, res, next) {
     const { my_lat, my_lng, lat1, lng1, lat2, lng2, is_sasi_hp } = req.query;
 
     var sql = `
@@ -83,7 +84,7 @@ router.get("/get_hp", async function (req, res, next) {
     res.send(resultArr);
 });
 
-router.get("/get_hp_search", async function (req, res, next) {
+router.get("/get_hp_search", middleware.checkToken, async function (req, res, next) {
     const my_lat = req.query.my_lat;
     const my_lng = req.query.my_lng;
     const is_sasi_hp = req.query.is_sasi_hp;
@@ -115,7 +116,7 @@ router.get("/get_hp_search", async function (req, res, next) {
     res.send(arr);
 });
 
-router.get("/get_hp/:idx/:memb_id", async function (req, res, next) {
+router.get("/get_hp/:idx/:memb_id", middleware.checkToken, async function (req, res, next) {
     const idx = req.params.idx;
     const memb_id = req.params.memb_id;
     const sql = `
@@ -137,7 +138,7 @@ router.get("/get_hp/:idx/:memb_id", async function (req, res, next) {
     res.send(obj);
 });
 
-router.get("/set_hp_fav/:idx/:memb_id", async function (req, res, next) {
+router.get("/set_hp_fav/:idx/:memb_id", middleware.checkToken, async function (req, res, next) {
     const idx = req.params.idx;
     const memb_id = req.params.memb_id;
     var sql = `SELECT count(*) as cnt FROM HP_FAV_tbl WHERE hp_idx = ? AND memb_id = ?`;

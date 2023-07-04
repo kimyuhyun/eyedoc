@@ -9,7 +9,7 @@ const percentIle = require("percentile");
 const middleware = require("../common/middleware");
 const requestIp = require("request-ip");
 
-router.get("/", async function (req, res, next) {
+router.get("/", middleware.checkToken, async function (req, res, next) {
     res.send({
         title: "Eyedoc api",
         ip: requestIp.getClientIp(req),
@@ -333,6 +333,15 @@ router.get("/get_eye_predict/:idx", middleware.checkToken, async function (req, 
     rtnObj.l_ile_arr = lIleArr;
 
     res.send(rtnObj);
+});
+
+router.get("/home_marquee_text", middleware.checkToken, async function (req, res, next) {
+    const sql = `SELECT memo FROM BOARD_tbl WHERE board_id ='marquee' ORDER BY idx DESC LIMIT 1`;
+    const arr = await utils.queryResult(sql, []);
+    const obj = arr[0];
+    obj.code = 1;
+    res.json(obj);
+
 });
 
 router.get("/is_push/:pid", async function (req, res, next) {

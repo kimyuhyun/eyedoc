@@ -7,14 +7,14 @@ router.post("/issue", async function (req, res, next) {
     console.log(req.headers);
     const agent = req.headers["user-agent"];
     if (agent.includes("Post") || agent.includes("axios") || agent.includes("curl")) {
-        res.send({ code: 0, msg: "토큰을 발급할 수 없습니다." });
+        res.json({ code: 0, msg: "토큰을 발급할 수 없습니다." });
         return;
     }
 
     //origin 체크!
     const origin = req.headers["origin"];
     if (origin != process.env.HOST_NAME) {
-        res.send({ code: 0, msg: "토큰을 발급할 수 없습니다." });
+        res.json({ code: 0, msg: "토큰을 발급할 수 없습니다. error origin" });
         return;
     }
 

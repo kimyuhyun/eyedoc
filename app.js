@@ -84,6 +84,7 @@ app.use("/family", require("./routes/family"));
 app.use("/excel", require("./routes/excel"));
 app.use("/stat", require("./routes/stat"));
 app.use("/terms", require("./routes/terms"));
+app.use("/terms_web", require("./routes/terms_web"));
 app.use("/insight", require("./routes/insight"));
 app.use("/auth", require("./routes/auth"));
 app.use("/sight_test", require("./routes/sight_test"));
