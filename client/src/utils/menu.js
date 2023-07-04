@@ -35,10 +35,10 @@ const menu = [
                 title: "커뮤니티",
                 link: "/adm/article/comm",
             },
-            // {
-            //     title: "뉴스레터",
-            //     link: "/adm/article/news",
-            // },
+            {
+                title: "홈화면 배너슬라이드",
+                link: "/adm/article/slide",
+            },
         ],
     },
     {
