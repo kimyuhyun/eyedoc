@@ -2,7 +2,6 @@ const express = require("express");
 const router = express.Router();
 const axios = require("axios");
 const utils = require("../common/utils");
-const exporter = require("highcharts-export-server");
 
 router.get("/", async function (req, res, next) {
     // var sql = ``;
@@ -96,48 +95,5 @@ router.get("/report", tokenVerify, async function (req, res, next) {
     });
 });
 
-// 차트 생성을 위한 비동기 함수
-async function generateChart() {
-    // Export Server 초기화
-    exportServer.initPool();
-
-    const chartOptions = {
-        type: "png", // 생성할 파일의 형식
-        options: {
-            title: {
-                text: "Fruit Consumption",
-            },
-            xAxis: {
-                categories: ["Apples", "Bananas", "Oranges"],
-            },
-            yAxis: {
-                title: {
-                    text: "Fruit eaten",
-                },
-            },
-            series: [
-                {
-                    name: "Jane",
-                    data: [1, 0, 4],
-                },
-                {
-                    name: "John",
-                    data: [5, 7, 3],
-                },
-            ],
-        },
-    };
-
-    return new Promise((resolve, reject) => {
-        exportServer.export(chartOptions, (err, res) => {
-            if (err) {
-                reject(err);
-            } else {
-                resolve(res);
-            }
-            exportServer.killPool();
-        });
-    });
-}
 
 module.exports = router;
