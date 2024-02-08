@@ -4,3 +4,5 @@ node_modules/
 client/node_modules/
 public/upload/
 liveuser
+tmp
+log

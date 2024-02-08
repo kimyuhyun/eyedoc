@@ -1,0 +1,463 @@
+<html lang="en">
+<head>
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge">
+    <!-- <meta name="viewport" content="width=740, initial-scale=1, shrink-to-fit=no"> -->
+    <link href="/stylesheets/bootstrap5.3.0.min.css" rel="stylesheet">
+    <style>
+        body {
+            width: 210mm;
+            min-height: 297mm;
+            font-family: 'Noto Sans Regular';
+        }
+        table {
+            border-collapse: collapse;
+        }
+        .table>tbody>tr>td,td,.table>thead>tr>td {
+            padding: 0px;
+            vertical-align: middle;
+            height: 30px;
+        }
+        .fs-12 {
+            font-size: 12px !important;
+        }
+        .fs-14 {
+            font-size: 14px !important;
+        }
+        @page {
+            size: A4 portrait;
+            margin: 10mm;
+        }
+        @media print,
+        screen {
+            * {
+                margin: 0;
+                padding: 0;
+                -webkit-box-sizing: border-box;
+                box-sizing: border-box;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+        }
+
+        @font-face {
+            font-family: "Noto Sans Regular";
+            font-weight: normal;
+            src: url('/fonts/NotoSansCJKkr-Regular.woff') format("woff");
+        }
+    </style>
+</head>
+
+
+<body class="m-0 p-0">
+    <div class="d-flex justify-content-between border-bottom border-warning border-3">
+        <div class="d-flex align-items-center justify-content-center bg-warning text-white"
+            style="width: 40px; height: 40px;">1</div>
+        <div class="d-flex align-items-center"><%= new Date().toLocaleString() %></div>
+    </div>
+
+    <h1 class="my-4 fw-bold">iGazy Report</h1>
+
+    
+
+    <div class="d-flex flex-row">
+        <table class="w-50 table table-sm table-bordered border-secondary-subtle fs-14 mb-0">
+            <tr>
+                <td rowspan="3" class="fw-bold">
+                    <div class="text-center text-nowrap">
+                        Exam Info
+                    </div>
+                </td>
+                <td class="px-1">H.ID</td>
+                <td class="px-1"><%=writer_id%></td>
+            </tr>
+            <tr>
+                <td class="px-1">Date</td>
+                <td class="px-1"><%=wdate%></td>
+            </tr>
+            <tr>
+                <td class="px-1">Seria#</td>
+                <td class="px-1">IG381S-EJ7K98-M7K1SC</td>
+            </tr>
+        </table>
+
+        <table class="w-50 table table-sm table-bordered border-secondary-subtle fs-14 mb-0 ms-2">
+            <tr>
+                <td rowspan="3" class="fw-bold">
+                    <div class="text-center text-nowrap">
+                        Patient Info
+                    </div>
+                </td>
+                <td class="px-1">Name</td>
+                <td class="px-1 auto_text_size"><%=name1%></td>
+            </tr>
+            <tr>
+                <td class="px-1">DOB</td>
+                <td class="px-1"><%=dob%></td>
+            </tr>
+            <tr>
+                <td class="px-1">Gender</td>
+                <td class="px-1"><%=gender%></td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- <img src="data:image/png;base64,<%=base64%>" class="w-100"/> -->
+
+    <div class="d-flex flex-row my-4">
+        <div id="chart1" class="w-50 border-top border-bottom border-warning border-2"></div>
+        <div id="chart2" class="w-50 border-top border-bottom border-warning border-2 ms-2"></div>
+    </div>
+
+    <div class="d-flex flex-column border-top border-bottom border-warning border-2">
+        <div id="chart3" class="w-100"></div>
+        <div id="chart4" class="w-100"></div>
+    </div>
+
+    
+</body>
+
+<script src="https://code.highcharts.com/highcharts.js"></script>
+<script src="https://code.highcharts.com/highcharts-more.js"></script>
+<script src="https://code.highcharts.com/modules/exporting.js"></script>
+<script src="https://code.highcharts.com/modules/export-data.js"></script>
+<script src="https://code.highcharts.com/modules/accessibility.js"></script>
+<script>
+    const x_axis = {
+        red_line: [],
+        blue_line: [],
+        red_hidden: [],
+        blue_hidden: [],
+    };
+
+    for (let i = 0; i <= 360; i++) {
+        let randomNum = Math.floor(Math.random() * 100) + 1;
+        x_axis.red_line.push([i, randomNum]);
+    }
+    
+    for (let i = 0; i <= 360; i++) {
+        let randomNum = Math.floor(Math.random() * 100) + 1;
+        x_axis.blue_line.push([i, randomNum]);
+    }
+
+    for (let i = 0; i <= 360; i++) {
+        let randomNum = Math.floor(Math.random() * 100) + 1;
+        x_axis.red_hidden.push([i, randomNum]);
+    }
+
+    for (let i = 0; i <= 360; i++) {
+        let randomNum = Math.floor(Math.random() * 100) + 1;
+        x_axis.blue_hidden.push([i, randomNum]);
+    }
+
+    const y_axis = {
+        red_line: [],
+        blue_line: [],
+        red_hidden: [],
+        blue_hidden: [],
+    };
+
+    for (let i = 0; i <= 360; i++) {
+        let randomNum = Math.floor(Math.random() * 100) + 1;
+        y_axis.red_line.push([i, randomNum]);
+    }
+    
+    for (let i = 0; i <= 360; i++) {
+        let randomNum = Math.floor(Math.random() * 100) + 1;
+        y_axis.blue_line.push([i, randomNum]);
+    }
+
+    for (let i = 0; i <= 360; i++) {
+        let randomNum = Math.floor(Math.random() * 100) + 1;
+        y_axis.red_hidden.push([i, randomNum]);
+    }
+
+    for (let i = 0; i <= 360; i++) {
+        let randomNum = Math.floor(Math.random() * 100) + 1;
+        y_axis.blue_hidden.push([i, randomNum]);
+    }
+
+
+    Highcharts.chart('chart1', {
+        chart: {
+            type: 'line',
+            height: 250,
+        },
+        exporting: {
+            enabled: false
+        },
+        credits: {
+            enabled: false  // Highcharts 로고를 비활성화
+        },
+        title: {
+            text: 'Right Eye',
+            align: 'left'
+        },
+
+        xAxis: {
+            type: 'linear'
+        },
+
+        yAxis: {
+            max: 100,
+            title: {
+                text: ''
+            }
+        },
+
+        series: [
+            {
+                name: 'X-Axis',
+                data: x_axis.red_line,
+                zIndex: 1,
+                color: Highcharts.getOptions().colors[0],
+                marker: {
+                    enabled: false
+                }
+            }, {
+                name: 'Y-Axis',
+                data: x_axis.blue_line,
+                zIndex: 1,
+                color: Highcharts.getOptions().colors[3],
+                marker: {
+                    enabled: false
+                }
+            }, {
+                name: '',
+                data: x_axis.red_hidden,
+                type: 'area',
+                linkedTo: ':previous',
+                lineWidth: 0,
+                color: Highcharts.getOptions().colors[0],
+                fillOpacity: 0.2,
+                zIndex: 0,
+                marker: {
+                    enabled: false
+                }
+            }, {
+                name: '',
+                data: x_axis.blue_hidden,
+                type: 'area',
+                linkedTo: ':previous',
+                lineWidth: 0,
+                color: Highcharts.getOptions().colors[3],
+                fillOpacity: 0.2,
+                zIndex: 0,
+                marker: {
+                    enabled: false
+                }
+            }]
+    });
+
+    Highcharts.chart('chart2', {
+        chart: {
+            type: 'line',
+            height: 250,
+        },
+        exporting: {
+            enabled: false
+        },
+        credits: {
+            enabled: false  // Highcharts 로고를 비활성화
+        },
+        title: {
+            text: 'Left Eye',
+            align: 'left'
+        },
+        xAxis: {
+            type: 'linear'
+        },
+
+        yAxis: {
+            max: 100,
+            title: {
+                text: ''
+            }
+        },
+
+        series: [
+            {
+                name: 'X-Axis',
+                data: y_axis.red_line,
+                zIndex: 1,
+                color: Highcharts.getOptions().colors[0],
+                marker: {
+                    enabled: false
+                }
+            }, {
+                name: 'Y-Axis',
+                data: y_axis.blue_line,
+                zIndex: 1,
+                color: Highcharts.getOptions().colors[3],
+                marker: {
+                    enabled: false
+                }
+            }, {
+                name: '',
+                data: y_axis.red_hidden,
+                type: 'area',
+                linkedTo: ':previous',
+                lineWidth: 0,
+                color: Highcharts.getOptions().colors[0],
+                fillOpacity: 0.2,
+                zIndex: 0,
+                marker: {
+                    enabled: false
+                }
+            }, {
+                name: '',
+                data: y_axis.blue_hidden,
+                type: 'area',
+                linkedTo: ':previous',
+                lineWidth: 0,
+                color: Highcharts.getOptions().colors[3],
+                fillOpacity: 0.2,
+                zIndex: 0,
+                marker: {
+                    enabled: false
+                }
+            }]
+    });
+
+    Highcharts.chart('chart3', {
+        chart: {
+            type: 'line',
+            height: 300,
+        },
+        exporting: {
+            enabled: false  // 이미지 저장버튼 비활성화
+        },
+        credits: {
+            enabled: false  // Highcharts 로고를 비활성화
+        },
+        title: {
+            text: 'X-Axis',
+            align: 'left'
+        },
+        xAxis: {
+            type: 'linear'
+        },
+        yAxis: {
+            max: 100,
+            title: {
+                text: ''
+            }
+        },
+        series: [
+            {
+                name: 'OD',
+                data: x_axis.red_line,
+                zIndex: 1,
+                color: Highcharts.getOptions().colors[0],
+                marker: {
+                    enabled: false
+                }
+            }, {
+                name: 'OD',
+                data: x_axis.blue_line,
+                zIndex: 1,
+                color: Highcharts.getOptions().colors[3],
+                marker: {
+                    enabled: false
+                }
+            }, {
+                name: '',
+                data: x_axis.red_hidden,
+                type: 'area',
+                linkedTo: ':previous',
+                lineWidth: 0,
+                color: Highcharts.getOptions().colors[0],
+                fillOpacity: 0.2,
+                zIndex: 0,
+                marker: {
+                    enabled: false
+                }
+            }, {
+                name: '',
+                data: x_axis.blue_hidden,
+                type: 'area',
+                linkedTo: ':previous',
+                lineWidth: 0,
+                color: Highcharts.getOptions().colors[3],
+                fillOpacity: 0.2,
+                zIndex: 0,
+                marker: {
+                    enabled: false
+                }
+            }]
+    });
+
+    Highcharts.chart('chart4', {
+        chart: {
+            type: 'line',
+            height: 300,
+        },
+        exporting: {
+            enabled: false  // 이미지 저장버튼 비활성화
+        },
+        credits: {
+            enabled: false  // Highcharts 로고를 비활성화
+        },
+        title: {
+            text: 'Y-Axis',
+            align: 'left'
+        },
+        xAxis: {
+            type: 'linear'
+        },
+        yAxis: {
+            max: 100,
+            title: {
+                text: ''
+            }
+        },
+        series: [
+            {
+                name: 'OD',
+                data: y_axis.red_line,
+                zIndex: 1,
+                color: Highcharts.getOptions().colors[0],
+                marker: {
+                    enabled: false
+                }
+            }, {
+                name: 'OD',
+                data: y_axis.blue_line,
+                zIndex: 1,
+                color: Highcharts.getOptions().colors[3],
+                marker: {
+                    enabled: false
+                }
+            }, {
+                name: '',
+                data: y_axis.red_hidden,
+                type: 'area',
+                linkedTo: ':previous',
+                lineWidth: 0,
+                color: Highcharts.getOptions().colors[0],
+                fillOpacity: 0.2,
+                zIndex: 0,
+                marker: {
+                    enabled: false
+                }
+            }, {
+                name: '',
+                data: y_axis.blue_hidden,
+                type: 'area',
+                linkedTo: ':previous',
+                lineWidth: 0,
+                color: Highcharts.getOptions().colors[3],
+                fillOpacity: 0.2,
+                zIndex: 0,
+                marker: {
+                    enabled: false
+                }
+            }]
+    });
+</script>
+
+
+<script src="/javascripts/textFit.js"></script>
+<script>
+    textFit(document.getElementsByClassName("auto_text_size"));
+</script>

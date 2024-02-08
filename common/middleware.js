@@ -8,7 +8,7 @@ const checkToken = async (req, res, next) => {
     if (!token || !tokenManager.checkToken(token)) {
         res.json({
             code: 0,
-            msg: "Your token has expired...",
+            msg: `Your token has expired...`,
         });
         return;
     }

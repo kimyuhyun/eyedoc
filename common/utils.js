@@ -326,12 +326,12 @@ class Utils {
             return `${diff}일 전`;
         }
         diff = now.diff(date, "weeks");
-        if (diff < 4) {
+        if (diff <= 4) {
             return `${diff}주 전`;
         }
         diff = now.diff(date, "months");
-        if (diff < 12) {
-            return `${diff}달 전`;
+        if (diff <= 12) {
+            return `${diff}개월 전`;
         }
         diff = now.diff(date, "years");
         return `${diff}년 전`;

@@ -1,4 +1,5 @@
-process.env.NODE_ENV = process.env.NODE_ENV && process.env.NODE_ENV.trim().toLowerCase() == "production" ? "production" : "development";
+process.env.NODE_ENV =
+    process.env.NODE_ENV && process.env.NODE_ENV.trim().toLowerCase() == "production" ? "production" : "development";
 
 const express = require("express");
 const session = require("express-session");
@@ -29,6 +30,9 @@ app.use(
         },
     })
 );
+
+app.engine("html", require("ejs").renderFile);
+app.set("view engine", "ejs");
 
 app.use(noCache());
 
@@ -68,7 +72,7 @@ app.use(logger("dev"));
 // app.use(cors());
 app.use(cookieParser());
 app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.urlencoded({ limit: '50mb', extended: false }));
 app.use(requestIp.mw());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "./public")));
@@ -96,6 +100,7 @@ app.use("/codes", require("./routes/codes"));
 app.use("/ocr", require("./routes/ocr"));
 app.use("/auto_write", require("./routes/auto_write"));
 
+app.use("/igazy", require("./routes/igazy"));
 
 // error handler
 app.use(function (err, req, res, next) {

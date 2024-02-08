@@ -67,4 +67,12 @@ router.post("/post", function (req, res, next) {
     });
 });
 
+
+router.get("/stt", function (req, res, next) {
+    console.log("stt");
+    res.render("stt.html", {
+        mode: process.env.NODE_ENV,
+    });
+});
+
 module.exports = router;

@@ -14,6 +14,7 @@ module.exports = {
     checkToken: (token) => {
         const token2 = aes256Util.decrypt(token);
         const now = Math.floor(new Date().getTime());
+        console.log(now + " - " + token2 + " = " + (now - token2));
         if (now < token2) {
             console.log("token ok");
             return true;
