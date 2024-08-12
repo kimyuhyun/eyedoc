@@ -2,16 +2,14 @@ const express = require("express");
 const router = express.Router();
 const axios = require("axios");
 const utils = require("../common/utils");
+const fs = require("fs").promises;
 
 router.get("/", async function (req, res, next) {
-    // var sql = ``;
-    // var params = [];
-    // var rtnArr = await utils.queryResult(sql, params);
-    // console.log(rtnArr);
+    const json_data = await fs.readFile("data.json", "utf8");
+    console.log(json_data);
 
     res.render("igazy_report.html", {
-        title: "Eyedoc Api",
-        mode: process.env.NODE_ENV,
+        json_data: json_data,
     });
 });
 
@@ -94,6 +92,5 @@ router.get("/report", tokenVerify, async function (req, res, next) {
         json_data: obj.json_data,
     });
 });
-
 
 module.exports = router;

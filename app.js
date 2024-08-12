@@ -99,7 +99,7 @@ app.use("/upload", require("./routes/upload"));
 app.use("/codes", require("./routes/codes"));
 app.use("/ocr", require("./routes/ocr"));
 app.use("/auto_write", require("./routes/auto_write"));
-
+app.use("/deep_link", require("./routes/deep_link"));
 app.use("/igazy", require("./routes/igazy"));
 
 // error handler
